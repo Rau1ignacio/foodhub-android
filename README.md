@@ -59,6 +59,7 @@ El proyecto sigue los principios de **Clean Architecture** y **MVVM (Model-View-
     ```
 2.  Abre el proyecto con [Android Studio](https://developer.android.com/studio) (versión Flamingo o superior recomendada).
 3.  Espera a que Gradle sincronice todas las dependencias.
+    (Usar Gradle JDK bjr-17 porque es el usamos para el proyecto)
 4.  Ejecuta la aplicación en un emulador o dispositivo físico.
     * (Nota: Para probar las funciones de **Cámara**, se requiere un dispositivo físico o un emulador configurado con una cámara virtual).
 
