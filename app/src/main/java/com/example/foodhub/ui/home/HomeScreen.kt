@@ -21,7 +21,7 @@ fun HomeScreen(repo: FoodRepository, onProductClick: (Long) -> Unit) {
     val vm: HomeVM = viewModel(factory = ViewModelFactory(repo))
     // Observa el estado del VM (query, categoría, lista filtrada)
     val state by vm.state.collectAsState()
-    val categories = listOf("Todos", "Frutas", "Verduras")
+    val categories = listOf("Todos", "Frutas", "Verduras", "Lácteos") // falta agregar | "Carnes", "Otros" | no los agregue por que se veia feo
 
     Column(Modifier.fillMaxSize()) {
 

@@ -16,6 +16,13 @@ import com.example.foodhub.ui.viewmodels.OrderHistoryVM
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Me falta agregar en el historial poder ver el detalle del pedido.
+ * por ejemplo:
+ * pedido 1 (solo sale cuando se hizo, hora y total)
+ *  Falta agregar que pedido se hizo
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrderHistoryScreen(vm: OrderHistoryVM, onBack: () -> Unit) {

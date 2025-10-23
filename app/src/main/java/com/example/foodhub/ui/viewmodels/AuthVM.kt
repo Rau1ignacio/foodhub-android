@@ -107,7 +107,7 @@ class AuthVM(
                 // Éxito
                 val newUser = User(name = form.name.trim(), email = form.email.trim(), passwordHash = form.pass, role = form.role)
                 repo.registerUser(newUser)
-                _state.update { it.copy(isLoading = false, registrationSuccess = true) } // Activa bandera de navegación
+                _state.update { it.copy(isLoading = false, registrationSuccess = true) }
             }
         }
     }

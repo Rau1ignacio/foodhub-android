@@ -15,6 +15,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.foodhub.ui.viewmodels.CartVM
 
+/**
+ * Las cosas que nos faltan agregar en el carrito es que el cleinte puede editar las cantidades
+ * a pedir antes de confirmar el pedido.
+ *
+ */
+
 @Composable
 fun CartScreen(
     vm: CartVM, // Recibe el ViewModel del carrito

@@ -77,6 +77,9 @@ fun DetailScreen(
 }
 
 // --- FUNCIÓN DE UTILIDAD (Vibración) ---
+
+// funcion NO PROBADA SU FUNCIONAMIENTOOOOOO
+
 // (Maneja la compatibilidad de versiones de Android para vibrar)
 private fun vibrateOnce(ctx: Context) {
     val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

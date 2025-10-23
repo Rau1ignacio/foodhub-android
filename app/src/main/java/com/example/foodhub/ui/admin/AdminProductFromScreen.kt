@@ -19,6 +19,12 @@ import com.example.foodhub.ui.viewmodels.AdminVM
 import java.io.File
 import java.util.*
 
+/**
+ * Falta agregar que cada que un cliente compre un producto se reduzca el
+ * stock de ese producto.
+ * ojala que llegue una notificacion del stock cuando llegue a 1 o 0
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminProductFormScreen(
@@ -43,7 +49,7 @@ fun AdminProductFormScreen(
     }
 
     // --- LANZADORES DE ACTIVIDAD (Para Cámara y Galería) ---
-    val cameraLauncher = rememberLauncherForActivityResult(
+    val cameraLauncher = rememberLauncherForActivityResult( // Probar si funciona esta funcion con un celular
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         // Cuando la cámara termina, actualiza el formState en el VM
