@@ -1,12 +1,13 @@
 # --- BLOQUE DE VERSIONES ---
 [versions]
-agp = "8.4.1"
+agp = "8.5.1"
 kotlin = "1.9.22"
 ksp = "1.9.22-1.0.17"           # Versión de KSP (procesador para Room).
 coreKtx = "1.13.1"
 lifecycleRuntimeKtx = "2.8.0"
 activityCompose = "1.9.0"
 composeBom = "2024.05.00"       # Versión del "BOM"  de Compose.
+composeCompiler = "1.5.10"
 navigationCompose = "2.7.7"
 room = "2.6.1"                  # Versión para todas las dependencias de Room.
 coil = "2.6.0"
