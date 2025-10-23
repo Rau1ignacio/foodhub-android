@@ -8,12 +8,12 @@ plugins {
 
 // --- BLOQUE DE CONFIGURACIÓN DE ANDROID ---
 android {
-    namespace = "com.example.foodhubtest" // Identificador único del código fuente (R.java).
+    namespace = "com.example.foodhub" // Identificador único del código fuente (R.java).
     compileSdk = 34                      // API contra la que se compila (Android 14).
 
     // Configuración base aplicada a todas las versiones de la app.
     defaultConfig {
-        applicationId = "com.example.foodhubtest" // ID único en la Play Store.
+        applicationId = "com.example.foodhub" // ID único en la Play Store.
         minSdk = 24                         // Versión mínima de Android soportada (Android 7.0).
         targetSdk = 34                      // Versión objetivo probada (Android 14).
         versionCode = 1

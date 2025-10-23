@@ -14,7 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.foodhub.core.nav.AppNav
 import com.example.foodhub.data.local.AppDatabase
 import com.example.foodhub.data.repository.FoodRepository
-import com.example.foodhubtest.R
+import com.example.foodhub.R
 
 class MainActivity : ComponentActivity() {
 
