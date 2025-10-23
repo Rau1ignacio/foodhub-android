@@ -10,134 +10,109 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-// --- DEFINICIÓN DE ESTADOS ---
-
-/**
- * Estado 1: Define SOLAMENTE los datos del formulario y sus errores específicos.
- */
+/** Estado: Datos del formulario de autenticación y sus errores. */
 data class AuthFormState(
     val name: String = "",
     val email: String = "",
     val pass: String = "",
-    val role: String = "CLIENT", // Rol seleccionado (CLIENT o ADMIN)
-    val nameError: String? = null, // Mensaje de error para el nombre
+    val role: String = "CLIENT", // Rol seleccionado
+    val nameError: String? = null,
     val emailError: String? = null,
     val passError: String? = null
 )
 
-/**
- * Estado 2: Define el ESTADO COMPLETO de la pantalla.
- * Contiene el formulario y también el estado de la UI (carga, errores, éxito).
- */
+/** Estado: Estado completo de la pantalla (form, carga, errores, éxito). */
 data class AuthScreenState(
-    val form: AuthFormState = AuthFormState(), // El estado del formulario
-    val isLoading: Boolean = false,            // true para mostrar un spinner de carga
-    val generalError: String? = null,          // Errores globales (ej. "Credenciales incorrectas")
-    val loginSuccess: Boolean = false,         // Bandera para navegar tras login
-    val registrationSuccess: Boolean = false   // Bandera para navegar tras registro
+    val form: AuthFormState = AuthFormState(),
+    val isLoading: Boolean = false, // Para mostrar un spinner
+    val generalError: String? = null, // Ej. "Credenciales incorrectas"
+    val loginSuccess: Boolean = false, // Bandera para navegar
+    val registrationSuccess: Boolean = false // Bandera para navegar
 )
 
-// --- VIEWMODEL ---
-
 /**
- * ViewModel para las pantallas de Login y Registro.
- * Recibe el 'repo' (para acceder a la BD) y 'sessionVM' (para actualizar la sesión global).
+ * ViewModel para Login y Registro.
+ * Recibe 'repo' (para la BD) y 'sessionVM' (para actualizar la sesión global).
  */
 class AuthVM(
     private val repo: FoodRepository,
     private val sessionVM: SessionVM
 ) : ViewModel() {
 
-    // --- ESTADO PRINCIPAL (Observado por la UI) ---
+    // Estado principal que la UI observa
     private val _state = MutableStateFlow(AuthScreenState())
-    val state = _state.asStateFlow() // La UI observa 'state'
+    val state = _state.asStateFlow()
 
-    /**
-     * Evento: Se llama cada vez que el usuario teclea algo en el formulario.
-     * Actualiza el 'form' y limpia el error general.
-     */
+    /** Evento: La UI lo llama al cambiar el formulario. Limpia el error general. */
     fun onFormChange(form: AuthFormState) {
         _state.update { it.copy(form = form, generalError = null) }
     }
 
-    // --- LÓGICA DE LOGIN ---
+    /** Evento: Intenta iniciar sesión. */
     fun login() {
         val form = _state.value.form
-
         // 1. Validar campos
         val emailError = Validators.email(form.email)
         val passError = Validators.password(form.pass)
 
-        // 2. Mostrar errores de campo (si los hay)
+        // 2. Mostrar errores de campos
         _state.update { it.copy(form = form.copy(emailError = emailError?.message, passError = passError?.message)) }
 
-        // 3. Detener si hay errores
+        // 3. Detener si hay errores de validación
         if (emailError != null || passError != null) return
 
-        // 4. Iniciar Corutina para Login
+        // 4. Iniciar lógica de login (en corutina)
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, generalError = null) } // Mostrar spinner
-
-            // 5. Consultar BD
+            _state.update { it.copy(isLoading = true, generalError = null) } // Activa spinner
             val user = repo.findUserByEmail(form.email.trim())
 
-            // 6. Verificar credenciales (Usuario existe, contraseña y rol coinciden)
+            // 5. Verificar usuario, contraseña Y ROL
             if (user == null || user.passwordHash != form.pass || user.role != form.role) {
                 // Error
                 _state.update { it.copy(isLoading = false, generalError = "Credenciales incorrectas para el rol seleccionado.") }
             } else {
                 // Éxito
-                sessionVM.onLoginSuccess(user) // <-- Notifica al SessionVM
-                _state.update { it.copy(isLoading = false, loginSuccess = true) } // <-- Activa bandera de navegación
+                sessionVM.onLoginSuccess(user) // Actualiza la sesión global
+                _state.update { it.copy(isLoading = false, loginSuccess = true) } // Activa bandera de navegación
             }
         }
     }
 
-    // --- LÓGICA DE REGISTRO ---
+    /** Evento: Intenta registrar un usuario. */
     fun register() {
         val form = _state.value.form
 
-        // 1. Validar TODOS los campos
+        // 1. Validar todos los campos
         val nameError = Validators.name(form.name)
         val emailError = Validators.email(form.email)
         val passError = Validators.password(form.pass)
 
-        // 2. Mostrar errores de campo
+        // 2. Mostrar errores de campos
         _state.update {
-            it.copy(
-                form = form.copy(
-                    nameError = nameError?.message,
-                    emailError = emailError?.message,
-                    passError = passError?.message
-                )
-            )
+            it.copy(form = form.copy(nameError = nameError?.message, emailError = emailError?.message, passError = passError?.message))
         }
 
-        // 3. Detener si hay errores
+        // 3. Detener si hay errores de validación
         if (nameError != null || emailError != null || passError != null) return
 
-        // 4. Iniciar Corutina para Registro
+        // 4. Iniciar lógica de registro (en corutina)
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, generalError = null) } // Mostrar spinner
+            _state.update { it.copy(isLoading = true, generalError = null) } // Activa spinner
 
-            // 5. Verificar si el correo ya existe
+            // 5. Verificar si el email ya existe
             if (repo.findUserByEmail(form.email.trim()) != null) {
                 // Error
                 _state.update { it.copy(isLoading = false, generalError = "El correo ya está registrado") }
             } else {
-                // Éxito: Crear usuario
+                // Éxito
                 val newUser = User(name = form.name.trim(), email = form.email.trim(), passwordHash = form.pass, role = form.role)
                 repo.registerUser(newUser)
-                _state.update { it.copy(isLoading = false, registrationSuccess = true) } // <-- Activa bandera de navegación
+                _state.update { it.copy(isLoading = false, registrationSuccess = true) } // Activa bandera de navegación
             }
         }
     }
 
-    /**
-     * Evento: La UI llama a esto DESPUÉS de navegar.
-     * Resetea las banderas de éxito para evitar que la app navegue de nuevo
-     * si el usuario rota la pantalla.
-     */
+    /** Evento: La UI lo llama DESPUÉS de navegar, para resetear las banderas de éxito. */
     fun onNavigationDone() {
         _state.update { it.copy(loginSuccess = false, registrationSuccess = false, generalError = null) }
     }
