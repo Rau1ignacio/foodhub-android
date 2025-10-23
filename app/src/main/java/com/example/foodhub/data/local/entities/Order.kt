@@ -1,4 +1,4 @@
-package com.example.foodhubtest.data.local.entities
+package com.example.foodhub.data.local.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
