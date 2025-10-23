@@ -1,12 +1,12 @@
 package com.example.foodhub.data.repository
 
-import com.example.foodhubtest.data.local.dao.OrderDao
-import com.example.foodhubtest.data.local.dao.ProductDao
-import com.example.foodhubtest.data.local.dao.UserDao
-import com.example.foodhubtest.data.local.entities.CartItem
-import com.example.foodhubtest.data.local.entities.Order
-import com.example.foodhubtest.data.local.entities.Product
-import com.example.foodhubtest.data.local.entities.User
+import com.example.foodhub.data.local.dao.OrderDao
+import com.example.foodhub.data.local.dao.ProductDao
+import com.example.foodhub.data.local.dao.UserDao
+import com.example.foodhub.data.local.entities.CartItem
+import com.example.foodhub.data.local.entities.Order
+import com.example.foodhub.data.local.entities.Product
+import com.example.foodhub.data.local.entities.User
 import kotlinx.coroutines.flow.Flow
 
 class FoodRepository(
