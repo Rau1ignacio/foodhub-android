@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.foodhubtest.ui.viewmodels.OrderHistoryVM
+import com.example.foodhub.ui.viewmodels.OrderHistoryVM
 import java.text.SimpleDateFormat
 import java.util.*
 

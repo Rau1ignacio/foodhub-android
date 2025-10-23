@@ -10,9 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.foodhubtest.data.repository.FoodRepository
-import com.example.foodhubtest.ui.viewmodels.HomeVM
-import com.example.foodhubtest.ui.viewmodels.ViewModelFactory
+import com.example.foodhub.data.repository.FoodRepository
+import com.example.foodhub.ui.viewmodels.HomeVM
+import com.example.foodhub.ui.viewmodels.ViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

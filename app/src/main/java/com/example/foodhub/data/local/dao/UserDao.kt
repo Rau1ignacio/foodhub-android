@@ -1,4 +1,4 @@
-package com.example.foodhubtest.data.local.dao
+package com.example.foodhub.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert

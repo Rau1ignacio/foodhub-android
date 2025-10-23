@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.example.foodhubtest.ui.viewmodels.AdminVM
+import com.example.foodhub.ui.viewmodels.AdminVM
 import java.io.File
 import java.util.*
 

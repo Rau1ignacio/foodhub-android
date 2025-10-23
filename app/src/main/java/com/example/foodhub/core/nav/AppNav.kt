@@ -10,13 +10,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
-import com.example.foodhubtest.data.repository.FoodRepository
-import com.example.foodhubtest.ui.auth.LoginScreen
-import com.example.foodhubtest.ui.auth.RegisterScreen
-import com.example.foodhubtest.ui.main.MainScreen
-import com.example.foodhubtest.ui.viewmodels.AuthVM
-import com.example.foodhubtest.ui.viewmodels.SessionVM
-import com.example.foodhubtest.ui.viewmodels.ViewModelFactoryWithSession
+import com.example.foodhub.data.repository.FoodRepository
+import com.example.foodhub.ui.auth.LoginScreen
+import com.example.foodhub.ui.auth.RegisterScreen
+import com.example.foodhub.ui.main.MainScreen
+import com.example.foodhub.ui.viewmodels.AuthVM
+import com.example.foodhub.ui.viewmodels.SessionVM
+import com.example.foodhub.ui.viewmodels.ViewModelFactoryWithSession
 
 //  Definición de rutas de navegación (Sellada para mantener controladas las rutas válidas)
 sealed class Route(val route: String) {

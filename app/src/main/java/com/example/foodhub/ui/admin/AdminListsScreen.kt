@@ -18,7 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.foodhubtest.ui.viewmodels.AdminVM
+import com.example.foodhub.ui.viewmodels.AdminVM
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

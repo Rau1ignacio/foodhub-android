@@ -2,9 +2,9 @@ package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foodhubtest.core.utils.Validators // Importa las reglas de validación
-import com.example.foodhubtest.data.local.entities.User
-import com.example.foodhubtest.data.repository.FoodRepository
+import com.example.foodhub.core.utils.Validators // Importa las reglas de validación
+import com.example.foodhub.data.local.entities.User
+import com.example.foodhub.data.repository.FoodRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

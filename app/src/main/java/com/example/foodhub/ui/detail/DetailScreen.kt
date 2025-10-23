@@ -17,9 +17,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.foodhubtest.data.local.entities.Product
-import com.example.foodhubtest.data.repository.FoodRepository
-import com.example.foodhubtest.ui.viewmodels.CartVM
+import com.example.foodhub.data.local.entities.Product
+import com.example.foodhub.data.repository.FoodRepository
+import com.example.foodhub.ui.viewmodels.CartVM
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.foodhubtest.ui.viewmodels.AuthFormState
-import com.example.foodhubtest.ui.viewmodels.AuthScreenState
+import com.example.foodhub.ui.viewmodels.AuthFormState
+import com.example.foodhub.ui.viewmodels.AuthScreenState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

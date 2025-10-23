@@ -18,11 +18,11 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.foodhubtest.core.nav.Route
-import com.example.foodhubtest.data.repository.FoodRepository
-import com.example.foodhubtest.ui.viewmodels.CartVM
-import com.example.foodhubtest.ui.viewmodels.SessionVM
-import com.example.foodhubtest.ui.viewmodels.ViewModelFactoryWithSession
+import com.example.foodhub.core.nav.Route
+import com.example.foodhub.data.repository.FoodRepository
+import com.example.foodhub.ui.viewmodels.CartVM
+import com.example.foodhub.ui.viewmodels.SessionVM
+import com.example.foodhub.ui.viewmodels.ViewModelFactoryWithSession
 
 // Define la estructura de un item de la barra de navegación inferior
 data class BottomNavItem(
@@ -54,7 +54,11 @@ fun MainScreen(
     val bottomNavItems = listOf(
         BottomNavItem("Home", Route.Home.route, Icons.Default.Home),
         BottomNavItem("Carrito", Route.Cart.route, Icons.Default.ShoppingCart),
-        BottomNavItem("Admin", Route.Admin.route, Icons.Default.AdminPanelSettings) // Pestaña de Admin
+        BottomNavItem(
+            "Admin",
+            Route.Admin.route,
+            Icons.Default.AdminPanelSettings
+        ) // Pestaña de Admin
     )
 
     Scaffold(
@@ -105,7 +109,9 @@ fun MainScreen(
                             onClick = {
                                 // Lógica de navegación de la barra inferior
                                 navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
                                     launchSingleTop = true
                                     restoreState = true
                                 }
@@ -132,3 +138,5 @@ fun MainScreen(
             sessionVM = sessionVM,
             cartVM = cartVM // Pasa el CartVM compartido
         )
+    }
+}

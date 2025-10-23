@@ -2,8 +2,8 @@ package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foodhubtest.data.local.entities.Order
-import com.example.foodhubtest.data.repository.FoodRepository
+import com.example.foodhub.data.local.entities.Order
+import com.example.foodhub.data.repository.FoodRepository
 import kotlinx.coroutines.flow.*
 
 /** Estado: El estado de la pantalla de Historial. */

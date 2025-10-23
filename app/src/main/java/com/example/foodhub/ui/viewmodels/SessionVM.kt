@@ -1,7 +1,7 @@
 package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import com.example.foodhubtest.data.local.entities.User
+import com.example.foodhub.data.local.entities.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

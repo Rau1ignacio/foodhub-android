@@ -9,16 +9,16 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.foodhubtest.core.nav.Route
-import com.example.foodhubtest.data.repository.FoodRepository
-import com.example.foodhubtest.ui.admin.AdminListScreen
-import com.example.foodhubtest.ui.admin.AdminProductFormScreen
-import com.example.foodhubtest.ui.cart.CartScreen
-import com.example.foodhubtest.ui.cart.OrderSummaryScreen
-import com.example.foodhubtest.ui.detail.DetailScreen
-import com.example.foodhubtest.ui.history.OrderHistoryScreen
-import com.example.foodhubtest.ui.home.HomeScreen
-import com.example.foodhubtest.ui.viewmodels.*
+import com.example.foodhub.core.nav.Route
+import com.example.foodhub.data.repository.FoodRepository
+import com.example.foodhub.ui.admin.AdminListScreen
+import com.example.foodhub.ui.admin.AdminProductFormScreen
+import com.example.foodhub.ui.cart.CartScreen
+import com.example.foodhub.ui.cart.OrderSummaryScreen
+import com.example.foodhub.ui.detail.DetailScreen
+import com.example.foodhub.ui.history.OrderHistoryScreen
+import com.example.foodhub.ui.home.HomeScreen
+import com.example.foodhub.ui.viewmodels.*
 
 @Composable
 fun MainNavGraph(

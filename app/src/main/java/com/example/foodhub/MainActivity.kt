@@ -11,9 +11,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.foodhubtest.core.nav.AppNav
-import com.example.foodhubtest.data.local.AppDatabase
-import com.example.foodhubtest.data.repository.FoodRepository
+import com.example.foodhub.core.nav.AppNav
+import com.example.foodhub.data.local.AppDatabase
+import com.example.foodhub.data.repository.FoodRepository
 
 class MainActivity : ComponentActivity() {
 

@@ -2,7 +2,7 @@ package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.foodhubtest.data.repository.FoodRepository
+import com.example.foodhub.data.repository.FoodRepository
 
 /**
  * Fábrica especializada que sabe cómo inyectar el 'repo' Y el 'sessionVM'
