@@ -13,7 +13,7 @@ import androidx.room.PrimaryKey
         parentColumns = ["id"],
         childColumns = ["userId"],
         onDelete = ForeignKey.CASCADE
-    )
+    )]
 )
 data class Order(
     @PrimaryKey(autoGenerate = true) val id: Long = 0, // ID autogenerado de la orden
