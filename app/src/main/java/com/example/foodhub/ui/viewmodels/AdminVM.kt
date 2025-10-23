@@ -1,4 +1,4 @@
-package com.example.foodhub.ui
+package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
