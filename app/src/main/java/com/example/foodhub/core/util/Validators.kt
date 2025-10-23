@@ -1,4 +1,4 @@
-package com.example.foodhubtest.core.utils
+package com.example.foodhub.core.utils
 
 // Representa un error de validación en un campo
 data class FieldError(val message: String)

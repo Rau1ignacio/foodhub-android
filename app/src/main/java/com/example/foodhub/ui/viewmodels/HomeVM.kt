@@ -6,82 +6,63 @@ import com.example.foodhubtest.data.local.entities.Product
 import com.example.foodhubtest.data.repository.FoodRepository
 import kotlinx.coroutines.flow.*
 
-/**
- * Define la "foto" completa del estado de la UI de la pantalla Home.
- * Es inmutable (data class). La UI solo debe recibir esto.
- */
+/** Estado: El estado completo de la pantalla Home. */
 data class HomeState(
-    val products: List<Product> = emptyList(), // La lista de productos ya filtrada
-    val searchQuery: String = "",              // El texto de búsqueda actual
-    val selectedCategory: String = "Todos"     // La categoría seleccionada
+    val products: List<Product> = emptyList(), // La lista YA FILTRADA
+    val searchQuery: String = "",
+    val selectedCategory: String = "Todos"
 )
 
-    /**
-     * ViewModel para la pantalla Home.
-     * Recibe el repositorio para acceder a los datos.
-     */
+/** ViewModel para la pantalla Home. */
 class HomeVM(repo: FoodRepository) : ViewModel() {
 
-    // --- ESTADOS INTERNOS (Privados) ---
-    // Representan las acciones del usuario (lo que escribe, lo que selecciona).
-
+    // --- ESTADOS INTERNOS (Filtros) ---
     private val _searchQuery = MutableStateFlow("")
     private val _selectedCategory = MutableStateFlow("Todos")
 
     // --- ESTADO PÚBLICO (Observado por la UI) ---
     /**
-     * Expone un único 'StateFlow<HomeState>' a la UI.
-     * Utiliza 'combine' para mezclar 3 flujos en 1 solo estado.
+     * Combina los flujos de búsqueda, categoría y productos.
+     * La UI solo observa este 'state' y recibe la lista ya filtrada.
      */
-
     val state: StateFlow<HomeState> = combine(
-        _searchQuery,        // 1. El flujo del texto de búsqueda
-        _selectedCategory,   // 2. El flujo de la categoría
-        repo.products()      // 3. El flujo de TODOS los productos desde la BD
+        _searchQuery, // Flujo 1
+        _selectedCategory, // Flujo 2
+        repo.products() // Flujo 3 (Lista completa de la BD)
     ) { query, category, products ->
 
-        // --- Lógica de Filtro 1: Búsqueda ---
-
+        // 1. Aplicar filtro de búsqueda
         val searchedProducts = if (query.isBlank()) {
-            products // Si no hay búsqueda, usa la lista completa
+            products
         } else {
-            // Filtra la lista por nombre
             products.filter { it.name.contains(query, ignoreCase = true) }
         }
 
-        // --- Lógica de Filtro 2: Categoría ---
-
+        // 2. Aplicar filtro de categoría (sobre la lista ya filtrada)
         val categorizedProducts = if (category == "Todos") {
-            searchedProducts // Si es "Todos", usa la lista ya filtrada por búsqueda
+            searchedProducts
         } else {
-            // Filtra la lista (ya filtrada por búsqueda) por categoría
             searchedProducts.filter { it.category.equals(category, ignoreCase = true) }
         }
 
-        // --- Creación del Estado Final ---
-        // Devuelve el objeto de estado actualizado que recibirá la UI.
-
+        // 3. Emite el estado final y filtrado
         HomeState(
-            products = categorizedProducts, // La lista final y filtrada
+            products = categorizedProducts,
             searchQuery = query,
             selectedCategory = category
         )
-    }.stateIn( // Convierte el 'combine' (Flow) en un 'StateFlow'
+    }.stateIn( // Convierte a StateFlow
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000), // Mantiene el flujo activo 5s
-        initialValue = HomeState() // Estado inicial mientras carga
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeState()
     )
 
-    // --- ACCIONES DEL USUARIO (Eventos) ---
-
-    /** Actualiza el estado de búsqueda (lo que dispara el 'combine'). */
-
+    /** Evento: La UI llama esto cuando el usuario escribe en la barra de búsqueda. */
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
 
-    /** Actualiza el estado de categoría (lo que dispara el 'combine'). */
-
+    /** Evento: La UI llama esto cuando el usuario selecciona un chip de categoría. */
     fun onCategorySelected(category: String) {
         _selectedCategory.value = category
     }
