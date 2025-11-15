@@ -69,21 +69,45 @@ class CartVM(
     }
 
     /** Evento: Confirma el pedido. */
-    fun confirmOrder(onSuccess: (Long) -> Unit) {
+    fun confirmOrder(onSuccess: (Long) -> Unit, onError: (String) -> Unit = {}) {
         viewModelScope.launch {
-            val total = cartState.value.total
-            // Obtiene el ID del usuario desde el SessionVM
+
+            val state = cartState.value
+            val items = state.items
+            val total = state.total
             val userId = sessionVM.state.value.loggedInUser?.id
 
-            // Solo procede si el carrito no está vacío y hay un usuario logueado
-            if (total > 0 && userId != null) {
-                // 1. Inserta la Orden (asociada al userId)
-                val newOrderId = repo.insertOrder(Order(userId = userId, total = total))
-                // 2. Limpia el carrito
-                repo.clearCart()
-                // 3. Llama al callback (para navegar) con el ID de la nueva orden
-                onSuccess(newOrderId)
+            if (items.isEmpty()) {
+                onError("El carrito está vacío.")
+                return@launch
             }
+
+            if (userId == null) {
+                onError("No hay usuario logueado.")
+                return@launch
+            }
+
+            // --- 1. Verificar stock para cada producto ---
+            for ((product, cartItem) in items) {
+                if (product.stock < cartItem.quantity) {
+                    onError("Stock insuficiente para '${product.name}'.")
+                    return@launch
+                }
+            }
+
+            // --- 2. Restar stock en la base de datos ---
+            for ((product, cartItem) in items) {
+                repo.decreaseStock(product.id, cartItem.quantity)
+            }
+
+            // --- 3. Insertar la orden ---
+            val newOrderId = repo.insertOrder(Order(userId = userId, total = total))
+
+            // --- 4. Limpiar carrito ---
+            repo.clearCart()
+
+            // --- 5. Notificar éxito ---
+            onSuccess(newOrderId)
         }
     }
 }

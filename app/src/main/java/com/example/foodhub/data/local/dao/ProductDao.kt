@@ -54,4 +54,8 @@ interface ProductDao {
     // Inserta una nueva orden y devuelve su ID generado
     @Insert
     suspend fun insertOrder(order: Order): Long
+
+    // Actualizar stock
+    @Query("UPDATE Product SET stock = :newStock WHERE id = :productId")
+    suspend fun updateStock(productId: Long, newStock: Int)
 }

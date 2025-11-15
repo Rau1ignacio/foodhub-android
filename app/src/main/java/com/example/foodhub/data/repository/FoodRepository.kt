@@ -35,4 +35,18 @@ class FoodRepository(
     // --- Usuarios ---
     suspend fun findUserByEmail(email: String): User? = userDao.findByEmail(email)
     suspend fun registerUser(user: User) = userDao.insert(user)
+
+
+    // --- STOCK: RESTAR STOCK CUANDO SE COMPRA ---
+    suspend fun decreaseStock(productId: Long, quantity: Int): Boolean {
+        val product = productDao.getById(productId) ?: return false
+
+        if (product.stock < quantity) return false
+
+        val newStock = product.stock - quantity
+
+        productDao.updateStock(productId, newStock)
+
+        return true
+    }
 }
