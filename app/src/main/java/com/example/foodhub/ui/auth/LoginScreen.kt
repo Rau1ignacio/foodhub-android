@@ -9,16 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.foodhub.ui.viewmodels.AuthFormState
-import com.example.foodhub.ui.viewmodels.AuthScreenState
+import com.example.foodhub.ui.viewmodels.AuthVM
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    state: AuthScreenState, // El estado completo (form, errores, isLoading)
-    onFormChange: (AuthFormState) -> Unit, // Notifica al VM que el formulario cambió
-    onLoginClick: () -> Unit, // Notifica al VM que se presionó "Login"
-    onNavigateToRegister: () -> Unit // Callback de navegación
+    vm: AuthVM,
+    state: com.example.foodhub.ui.viewmodels.AuthScreenState,
+    onNavigateToRegister: () -> Unit
 ) {
     val form = state.form
     val roles = listOf("CLIENT", "ADMIN")
@@ -37,7 +35,7 @@ fun LoginScreen(
             roles.forEach { role ->
                 FilterChip(
                     selected = form.role == role,
-                    onClick = { onFormChange(form.copy(role = role)) }, // Actualiza el rol en el VM
+                    onClick = { vm.onRoleChange(role) },
                     label = { Text(if (role == "CLIENT") "Cliente" else "Admin") }
                 )
             }
@@ -47,47 +45,49 @@ fun LoginScreen(
         // --- CAMPO EMAIL ---
         OutlinedTextField(
             value = form.email,
-            onValueChange = { onFormChange(form.copy(email = it)) }, // Notifica al VM
+            onValueChange = { vm.onEmailChange(it) },
             label = { Text("Email") },
-            isError = form.emailError != null, // Muestra error si existe
+            isError = form.emailError != null,
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            supportingText = {
+                if (form.emailError != null) Text(form.emailError, color = MaterialTheme.colorScheme.error)
+            }
         )
-        form.emailError?.let { Text(it, color = MaterialTheme.colorScheme.error) } // Mensaje de error
-        Spacer(Modifier.height(8.dp))
 
         // --- CAMPO CONTRASEÑA ---
         OutlinedTextField(
             value = form.pass,
-            onValueChange = { onFormChange(form.copy(pass = it)) }, // Notifica al VM
+            onValueChange = { vm.onPasswordChange(it) },
             label = { Text("Contraseña") },
             isError = form.passError != null,
             modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(), // Oculta el texto
+            visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true
+            singleLine = true,
+            supportingText = {
+                if (form.passError != null) Text(form.passError, color = MaterialTheme.colorScheme.error)
+            }
         )
-        form.passError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
         Spacer(Modifier.height(16.dp))
 
-        // --- INDICADOR DE CARGA Y ERROR GENERAL ---
+        // --- ESTADO DE CARGA ---
         if (state.isLoading) {
             CircularProgressIndicator(modifier = Modifier.padding(vertical = 8.dp))
-        } else {
-            // Muestra el error de "Credenciales incorrectas"
-            state.generalError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
-            }
         }
 
-        // --- BOTONES ---
-        Button(
-            onClick = onLoginClick, // Llama al VM
-            enabled = !state.isLoading, // Se deshabilita mientras carga
-            modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) {
-            Text("Login")
+        // --- ERROR GENERAL (del Backend) ---
+        state.generalError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
         }
+
+        Button(
+            onClick = { vm.login() },
+            enabled = !state.isLoading,
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) { Text("Login") }
+
         TextButton(onClick = onNavigateToRegister, enabled = !state.isLoading) {
             Text("¿No tienes cuenta? Regístrate")
         }

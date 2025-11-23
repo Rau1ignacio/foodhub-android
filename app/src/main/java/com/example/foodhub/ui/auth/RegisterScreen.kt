@@ -9,16 +9,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.foodhub.ui.viewmodels.AuthFormState
-import com.example.foodhub.ui.viewmodels.AuthScreenState
+import com.example.foodhub.ui.viewmodels.AuthVM
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    state: AuthScreenState, // Estado completo desde el VM
-    onFormChange: (AuthFormState) -> Unit, // Notifica cambios al VM
-    onRegisterClick: () -> Unit, // Llama a la función de registro en el VM
-    onNavigateToLogin: () -> Unit // Callback de navegación
+    vm: AuthVM,
+    state: com.example.foodhub.ui.viewmodels.AuthScreenState,
+    onNavigateToLogin: () -> Unit
 ) {
     val form = state.form
     val roles = listOf("CLIENT", "ADMIN")
@@ -31,71 +29,64 @@ fun RegisterScreen(
         Text("Crear Cuenta", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(24.dp))
 
-        // --- SELECTOR DE ROL ---
         Text("Registrarse como:", style = MaterialTheme.typography.labelLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
             roles.forEach { role ->
                 FilterChip(
                     selected = form.role == role,
-                    onClick = { onFormChange(form.copy(role = role)) }, // Actualiza el VM
+                    onClick = { vm.onRoleChange(role) },
                     label = { Text(if (role == "CLIENT") "Cliente" else "Admin") }
                 )
             }
         }
         Spacer(Modifier.height(16.dp))
 
-        // --- CAMPO NOMBRE ---
+        // --- NOMBRE ---
         OutlinedTextField(
             value = form.name,
-            onValueChange = { onFormChange(form.copy(name = it)) }, // Notifica al VM
+            onValueChange = { vm.onNameChange(it) },
             label = { Text("Nombre") },
             isError = form.nameError != null,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            supportingText = { if (form.nameError != null) Text(form.nameError, color = MaterialTheme.colorScheme.error) }
         )
-        form.nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Spacer(Modifier.height(8.dp))
 
-        // --- CAMPO EMAIL ---
+        // --- EMAIL ---
         OutlinedTextField(
             value = form.email,
-            onValueChange = { onFormChange(form.copy(email = it)) }, // Notifica al VM
+            onValueChange = { vm.onEmailChange(it) },
             label = { Text("Email") },
             isError = form.emailError != null,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            supportingText = { if (form.emailError != null) Text(form.emailError, color = MaterialTheme.colorScheme.error) }
         )
-        form.emailError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        Spacer(Modifier.height(8.dp))
 
-        // --- CAMPO CONTRASEÑA ---
+        // --- PASSWORD ---
         OutlinedTextField(
             value = form.pass,
-            onValueChange = { onFormChange(form.copy(pass = it)) }, // Notifica al VM
+            onValueChange = { vm.onPasswordChange(it) },
             label = { Text("Contraseña (mín. 6 caracteres)") },
             isError = form.passError != null,
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            supportingText = { if (form.passError != null) Text(form.passError, color = MaterialTheme.colorScheme.error) }
         )
-        form.passError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+
         Spacer(Modifier.height(16.dp))
 
-        // --- INDICADOR DE CARGA Y ERROR GENERAL ---
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(vertical = 8.dp))
-        } else {
-            state.generalError?.let { // Ej. "El correo ya está registrado"
-                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
-            }
+        if (state.isLoading) CircularProgressIndicator(modifier = Modifier.padding(vertical = 8.dp))
+
+        state.generalError?.let {
+            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
         }
 
-        // --- BOTONES ---
         Button(
-            onClick = onRegisterClick, // Llama al VM
+            onClick = { vm.register() },
             enabled = !state.isLoading,
             modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) {
-            Text("Registrarse")
-        }
+        ) { Text("Registrarse") }
+
         TextButton(onClick = onNavigateToLogin, enabled = !state.isLoading) {
             Text("¿Ya tienes cuenta? Inicia Sesión")
         }
