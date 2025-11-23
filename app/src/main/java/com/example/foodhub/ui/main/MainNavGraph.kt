@@ -1,9 +1,13 @@
 package com.example.foodhub.ui.main
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,129 +17,160 @@ import com.example.foodhub.core.nav.Route
 import com.example.foodhub.data.repository.FoodRepository
 import com.example.foodhub.ui.admin.AdminListScreen
 import com.example.foodhub.ui.admin.AdminProductFormScreen
+import com.example.foodhub.ui.auth.LoginScreen
+import com.example.foodhub.ui.auth.RegisterScreen
 import com.example.foodhub.ui.cart.CartScreen
-import com.example.foodhub.ui.cart.OrderSummaryScreen
 import com.example.foodhub.ui.detail.DetailScreen
-import com.example.foodhub.ui.history.OrderHistoryScreen
 import com.example.foodhub.ui.home.HomeScreen
-import com.example.foodhub.ui.viewmodels.*
+import com.example.foodhub.ui.viewmodels.AdminVM
+import com.example.foodhub.ui.viewmodels.AuthVM
+import com.example.foodhub.ui.viewmodels.CartVM
+import com.example.foodhub.ui.viewmodels.DetailVM
+import com.example.foodhub.ui.viewmodels.SessionVM
+import com.example.foodhub.ui.viewmodels.ViewModelFactory
 
 @Composable
 fun MainNavGraph(
-    modifier: Modifier = Modifier,
-    navController: NavHostController, // El controlador que maneja este grafo
+    navController: NavHostController,
     repo: FoodRepository,
-    sessionVM: SessionVM, // VM de Sesión (para saber quién está logueado)
-    cartVM: CartVM // VM de Carrito (compartido entre Home, Detail y Cart)
+    modifier: Modifier = Modifier,
+    sessionVM: SessionVM,
+    cartVM: CartVM
 ) {
-    // Factories para crear ViewModels que necesitan dependencias
-    val factoryWithSession = ViewModelFactoryWithSession(repo, sessionVM)
-    val factorySimple = ViewModelFactory(repo)
+    // AuthVM que conoce el repositorio y la sesión
+    val authVM: AuthVM = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return AuthVM(repo, sessionVM) as T
+            }
+        }
+    )
 
-    // NavHost define el contenedor para las pantallas de este grafo
+    // VM para la parte de administración de productos
+    val adminVM: AdminVM = viewModel(factory = ViewModelFactory(repo))
+
     NavHost(
         navController = navController,
-        startDestination = Route.Home.route, // La pantalla inicial es "Home"
+        startDestination = "login",
         modifier = modifier
     ) {
 
-        // --- RUTA: Home ---
+        // ----------------- LOGIN -----------------
+        composable("login") {
+            val state by authVM.state.collectAsState()
+
+            // Si el login fue exitoso, vamos al Home
+            LaunchedEffect(state.loginSuccess) {
+                if (state.loginSuccess) {
+                    authVM.onNavigationDone()
+                    navController.navigate(Route.Home.route) {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            }
+
+            LoginScreen(
+                vm = authVM,
+                state = state,
+                onNavigateToRegister = { navController.navigate("register") }
+            )
+        }
+
+        // ----------------- REGISTER -----------------
+        composable("register") {
+            val state by authVM.state.collectAsState()
+
+            LaunchedEffect(state.registrationSuccess) {
+                if (state.registrationSuccess) {
+                    authVM.onNavigationDone()
+                    navController.popBackStack() // volvemos al login
+                }
+            }
+
+            RegisterScreen(
+                vm = authVM,
+                state = state,
+                onNavigateToLogin = { navController.popBackStack() }
+            )
+        }
+
+        // ----------------- HOME -----------------
         composable(Route.Home.route) {
             HomeScreen(
                 repo = repo,
                 onProductClick = { productId ->
-                    // Navega a la pantalla de Detalle, pasando el ID
-                    navController.navigate(Route.Detail.build(productId))
+                    navController.navigate("detail/$productId")
                 }
             )
         }
 
-        // --- RUTA: Carrito ---
-        composable(Route.Cart.route) {
-            CartScreen(
-                vm = cartVM, // Usa el VM de carrito compartido
-                onConfirmOrder = { orderId ->
-                    // Navega a Resumen y limpia el backstack hasta Home
-                    navController.navigate(Route.OrderSummary.build(orderId)) {
-                        popUpTo(Route.Home.route)
-                    }
-                }
-            )
-        }
-
-        // --- RUTA: Historial ---
-        composable("history") { // Ruta simple (definida en TopAppBar)
-            // Crea un VM solo para esta pantalla
-            val orderHistoryVM: OrderHistoryVM = viewModel(factory = factoryWithSession)
-            OrderHistoryScreen(vm = orderHistoryVM, onBack = { navController.popBackStack() })
-        }
-
-        // --- RUTA: Lista de Admin ---
-        composable(Route.Admin.route) { // Ruta base de Admin
-            val adminVM: AdminVM = viewModel(factory = factorySimple) // VM para el CRUD
-            AdminListScreen(
-                vm = adminVM,
-                onAddProduct = {
-                    // Navega al formulario (modo "Crear", sin ID o con ID=0)
-                    navController.navigate(Route.AdminForm.build())
-                },
-                onEditProduct = { productId ->
-                    // Navega al formulario (modo "Editar", pasando el ID)
-                    navController.navigate(Route.AdminForm.build(productId))
-                }
-            )
-        }
-
-        // --- RUTA: Formulario de Admin (con argumento opcional) ---
+        // ----------------- DETAIL -----------------
         composable(
-            route = Route.AdminForm.route, // "adminForm?productId={productId}"
-            arguments = listOf(navArgument("productId") {
-                type = NavType.LongType
-                defaultValue = 0L // 0L = Modo "Crear"
-            })
+            route = Route.Detail.route,
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
         ) { backStackEntry ->
-            // Recibe el ID (0L si es nuevo)
-            val productId = backStackEntry.arguments?.getLong("productId")
-            // Reutiliza la instancia del VM de Admin
-            val adminVM: AdminVM = viewModel(factory = factorySimple)
-            AdminProductFormScreen(
-                vm = adminVM,
-                productId = if (productId == 0L) null else productId, // Pasa null si es 0L
-                navBack = { navController.popBackStack() } // Vuelve a la lista
-            )
-        }
+            val productId = backStackEntry.arguments?.getLong("id") ?: 0L
 
-        // --- RUTA: Detalle de Producto (con argumento obligatorio) ---
-        composable(
-            route = Route.Detail.route, // "detail/{id}"
-            arguments = listOf(navArgument(Route.Detail.argName) { type = NavType.LongType })
-        ) { entry ->
-            val id = entry.arguments?.getLong(Route.Detail.argName) ?: 0L
+            // 1. Creamos el ViewModel específico para Detalle aquí
+            val detailVM: DetailVM = viewModel(factory = ViewModelFactory(repo))
+
+            // 2. Cargamos el producto cuando entramos a la pantalla
+            LaunchedEffect(productId) {
+                detailVM.loadProduct(productId)
+            }
+
+            // 3. Pasamos los ViewModels a la pantalla
             DetailScreen(
-                repo = repo,
-                cartVM = cartVM, // Pasa el VM de carrito compartido
-                id = id,
+                detailVM = detailVM,
+                cartVM = cartVM,
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // --- RUTA: Resumen de Orden (con argumento obligatorio) ---
-        composable(
-            route = Route.OrderSummary.route, // "summary/{orderId}"
-            arguments = listOf(navArgument("orderId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val orderId = backStackEntry.arguments?.getLong("orderId") ?: -1L
-            OrderSummaryScreen(
-                orderId = orderId,
-                onBackToHome = {
-                    // Vuelve a Home y limpia TODO el backstack
+        // ----------------- CART -----------------
+        composable(Route.Cart.route) {
+            CartScreen(
+                vm = cartVM,
+                onOrderConfirmed = {
+                    // Después de confirmar pedido, volvemos al Home
                     navController.navigate(Route.Home.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            inclusive = true
-                        }
+                        popUpTo(Route.Home.route) { inclusive = true }
                     }
                 }
             )
+        }
+
+        // ----------------- ADMIN LIST -----------------
+        composable(Route.Admin.route) {
+            AdminListScreen(
+                vm = adminVM,
+                onEditProduct = { productId ->
+                    navController.navigate("admin_form/$productId")
+                },
+                onAddProduct = {
+                    navController.navigate("admin_form/0")
+                }
+            )
+        }
+
+        // ----------------- ADMIN FORM -----------------
+        composable(
+            route = "admin_form/{productId}",
+            arguments = listOf(navArgument("productId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("productId") ?: 0L
+            AdminProductFormScreen(
+                vm = adminVM,
+                productId = if (id == 0L) null else id,
+                navBack = { navController.popBackStack() }
+            )
+        }
+
+        // ----------------- HISTORY (placeholder) -----------------
+        composable("history") {
+            // Aquí iría tu OrderHistoryScreen cuando lo tengas listo
+            // OrderHistoryScreen(...)
         }
     }
 }

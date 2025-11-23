@@ -1,94 +1,77 @@
 package com.example.foodhub.ui.auth
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.foodhub.ui.viewmodels.AuthScreenState
 import com.example.foodhub.ui.viewmodels.AuthVM
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     vm: AuthVM,
-    state: com.example.foodhub.ui.viewmodels.AuthScreenState,
+    state: AuthScreenState,
     onNavigateToRegister: () -> Unit
 ) {
-    val form = state.form
-    val roles = listOf("CLIENT", "ADMIN")
-
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center
     ) {
-        Text("Iniciar Sesión", style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(24.dp))
+        Text("Iniciar Sesión", style = MaterialTheme.typography.headlineMedium)
 
-        // --- SELECTOR DE ROL ---
-        Text("Iniciar sesión como:", style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-            roles.forEach { role ->
-                FilterChip(
-                    selected = form.role == role,
-                    onClick = { vm.onRoleChange(role) },
-                    label = { Text(if (role == "CLIENT") "Cliente" else "Admin") }
-                )
-            }
-        }
-        Spacer(Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // --- CAMPO EMAIL ---
+        // EMAIL
         OutlinedTextField(
-            value = form.email,
-            onValueChange = { vm.onEmailChange(it) },
+            value = state.form.email,
+            onValueChange = { text -> vm.onEmailChange(text) }, // Lambda explícita
             label = { Text("Email") },
-            isError = form.emailError != null,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            supportingText = {
-                if (form.emailError != null) Text(form.emailError, color = MaterialTheme.colorScheme.error)
-            }
+            isError = state.form.emailError != null,
+            modifier = Modifier.fillMaxWidth()
         )
+        // Error message (Text) must be OUTSIDE onValueChange
+        state.form.emailError?.let { errorMsg ->
+            Text(text = errorMsg, color = MaterialTheme.colorScheme.error)
+        }
 
-        // --- CAMPO CONTRASEÑA ---
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // PASSWORD
         OutlinedTextField(
-            value = form.pass,
-            onValueChange = { vm.onPasswordChange(it) },
+            value = state.form.pass,
+            onValueChange = { text -> vm.onPasswordChange(text) }, // Lambda explícita
             label = { Text("Contraseña") },
-            isError = form.passError != null,
-            modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            singleLine = true,
-            supportingText = {
-                if (form.passError != null) Text(form.passError, color = MaterialTheme.colorScheme.error)
-            }
+            isError = state.form.passError != null,
+            modifier = Modifier.fillMaxWidth()
         )
-
-        Spacer(Modifier.height(16.dp))
-
-        // --- ESTADO DE CARGA ---
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(vertical = 8.dp))
+        state.form.passError?.let { errorMsg ->
+            Text(text = errorMsg, color = MaterialTheme.colorScheme.error)
         }
 
-        // --- ERROR GENERAL (del Backend) ---
-        state.generalError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
+        // ERROR GENERAL
+        state.generalError?.let { errorMsg ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = errorMsg, color = MaterialTheme.colorScheme.error)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = { vm.login() },
-            enabled = !state.isLoading,
-            modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) { Text("Login") }
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading
+        ) {
+            Text(if (state.isLoading) "Cargando..." else "Entrar")
+        }
 
-        TextButton(onClick = onNavigateToRegister, enabled = !state.isLoading) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = onNavigateToRegister) {
             Text("¿No tienes cuenta? Regístrate")
         }
     }

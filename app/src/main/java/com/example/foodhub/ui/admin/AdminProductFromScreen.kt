@@ -6,178 +6,109 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.example.foodhub.ui.viewmodels.AdminVM
 import java.io.File
-import java.util.*
-
-/**
- * Falta agregar que cada que un cliente compre un producto se reduzca el
- * stock de ese producto.
- * ojala que llegue una notificacion del stock cuando llegue a 1 o 0
- */
+import java.util.Objects
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminProductFormScreen(
     vm: AdminVM,
-    productId: Long?, // ID del producto (nulo si es "Crear", con valor si es "Editar")
-    navBack: () -> Unit // Callback para volver atrás al guardar
+    productId: Long?,
+    navBack: () -> Unit
 ) {
-    // Observa el estado del formulario desde el VM
     val formState by vm.formState.collectAsState()
-    val errors = formState.validate() // Valida el estado actual (en el Composable, aunque idealmente se hace en el VM)
+    val errors = formState.isValid
     val context = LocalContext.current
-    var tempImageUri by remember { mutableStateOf<Uri?>(null) } // Almacen temporal para la foto de la cámara
 
-    // --- EFECTO DE CARGA ---
-    // Se ejecuta 1 vez. Carga el producto si 'productId' no es nulo.
+    val nameError = if (formState.name.isBlank()) "Requerido" else null
+    val priceError = if (formState.price.toIntOrNull() == null) "Inválido" else null
+
     LaunchedEffect(productId) {
-        if (productId != null && productId != 0L) {
-            vm.loadProductForEdit(productId) // Modo Editar
-        } else {
-            vm.clearForm() // Modo Crear
-        }
+        if (productId != null && productId != 0L) vm.loadProductForEdit(productId) else vm.clearForm()
     }
 
-    // --- LANZADORES DE ACTIVIDAD (Para Cámara y Galería) ---
-    val cameraLauncher = rememberLauncherForActivityResult( // Probar si funciona esta funcion con un celular
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        // Cuando la cámara termina, actualiza el formState en el VM
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
-            tempImageUri?.let { vm.onFormChange(formState.copy(photoUri = it.toString())) }
+            vm.formState.value.let { currentState ->
+                vm.onFormChange(currentState.copy(imageUrl = currentState.imageUrl))
+            }
         }
     }
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        // Cuando la galería termina, actualiza el formState en el VM
-        uri?.let { vm.onFormChange(formState.copy(photoUri = it.toString())) }
+
+    var tempUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Launcher de Galería
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { vm.onFormChange(formState.copy(imageUrl = it.toString())) }
     }
 
-    // --- CUERPO DEL FORMULARIO ---
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
     ) {
-        // Título dinámico
         Text(if (formState.id == 0L) "Nuevo Producto" else "Editar Producto", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
 
-        // --- CAMPO NOMBRE ---
         OutlinedTextField(
             value = formState.name,
-            onValueChange = { vm.onFormChange(formState.copy(name = it)) }, // Notifica al VM
+            onValueChange = { vm.onFormChange(formState.copy(name = it)) },
             label = { Text("Nombre") },
-            isError = errors.containsKey("name"), // Muestra error si existe
+            isError = nameError != null,
             modifier = Modifier.fillMaxWidth()
         )
-        // Muestra el mensaje de error
-        errors["name"]?.let { Text(it.message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp) }
+        if (nameError != null) Text(nameError, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+
         Spacer(Modifier.height(8.dp))
 
-        // --- CAMPO PRECIO ---
         OutlinedTextField(
             value = formState.price,
-            onValueChange = { vm.onFormChange(formState.copy(price = it)) }, // Notifica al VM
-            label = { Text("Precio (CLP)") },
-            isError = errors.containsKey("price"),
+            onValueChange = { vm.onFormChange(formState.copy(price = it)) },
+            label = { Text("Precio") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
-        errors["price"]?.let { Text(it.message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp) }
+
         Spacer(Modifier.height(8.dp))
 
-        // --- CAMPO STOCK --- (Similar a los anteriores)
         OutlinedTextField(
             value = formState.stock,
             onValueChange = { vm.onFormChange(formState.copy(stock = it)) },
             label = { Text("Stock") },
-            isError = errors.containsKey("stock"),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
-        errors["stock"]?.let { Text(it.message, color = MaterialTheme.colorScheme.error, fontSize = 12.sp) }
-        Spacer(Modifier.height(8.dp))
 
-        // --- CAMPO CATEGORÍA (Menú desplegable) ---
-        val categories = listOf("Frutas", "Verduras", "Lácteos", "Carnes", "Otros")
-        var isCategoryMenuExpanded by remember { mutableStateOf(false) }
-
-        ExposedDropdownMenuBox(
-            expanded = isCategoryMenuExpanded,
-            onExpandedChange = { isCategoryMenuExpanded = it }
-        ) {
-            OutlinedTextField( // Campo de texto (falso) que muestra la selección
-                value = formState.category,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Categoría") },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryMenuExpanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
-            )
-            ExposedDropdownMenu( // El menú real
-                expanded = isCategoryMenuExpanded,
-                onDismissRequest = { isCategoryMenuExpanded = false }
-            ) {
-                categories.forEach { category ->
-                    DropdownMenuItem(
-                        text = { Text(category) },
-                        onClick = {
-                            vm.onFormChange(formState.copy(category = category)) // Notifica al VM
-                            isCategoryMenuExpanded = false // Cierra el menú
-                        }
-                    )
-                }
-            }
-        }
         Spacer(Modifier.height(16.dp))
 
-        // --- SWITCH DISPONIBILIDAD ---
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Switch(
-                checked = formState.available,
-                onCheckedChange = { vm.onFormChange(formState.copy(available = it)) } // Notifica al VM
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("Disponible para la venta")
-        }
-        Spacer(Modifier.height(16.dp))
-
-        // --- BOTONES DE IMAGEN ---
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { // Botón Galería
-                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }) { Text("Elegir Foto") }
-
-            Button(onClick = { // Botón Cámara
-                // Crea una URI temporal para guardar la foto
-                val uri = FileProvider.getUriForFile(
-                    Objects.requireNonNull(context),
-                    "com.example.foodhubtest.provider", // Debe coincidir con el Manifest
-                    File.createTempFile("camera_photo_", ".jpg", context.cacheDir)
-                )
-                tempImageUri = uri
-                cameraLauncher.launch(uri) // Lanza la cámara
-            }) { Text("Tomar Foto") }
+            Button(onClick = { galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text("Galería") }
+            Button(onClick = {
+                val photoFile = File.createTempFile("img_", ".jpg", context.cacheDir)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", photoFile)
+                tempUri = uri
+                // Actualizamos el estado con la URI temporal antes de abrir cámara
+                vm.onFormChange(formState.copy(imageUrl = uri.toString()))
+                cameraLauncher.launch(uri)
+            }) { Text("Cámara") }
         }
 
-        // ... (Espaciador y botón de guardar)
-        Spacer(Modifier.weight(1f)) // Empuja el botón al fondo
+        Spacer(Modifier.height(32.dp))
 
-        // --- BOTÓN GUARDAR ---
         Button(
-            enabled = formState.isValid, // Se activa solo si el formulario es válido
-            onClick = { vm.saveOrUpdateProduct(onSuccess = navBack) }, // Llama al VM para guardar
-            modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) {
-            Text("Guardar Producto")
-        }
+            enabled = formState.isValid,
+            onClick = { vm.saveOrUpdateProduct(onSuccess = navBack) },
+            modifier = Modifier.fillMaxWidth().height(50.dp)
+        ) { Text("Guardar") }
     }
 }

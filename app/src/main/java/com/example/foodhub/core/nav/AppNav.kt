@@ -21,10 +21,11 @@ import com.example.foodhub.ui.viewmodels.ViewModelFactoryWithSession
 sealed class Route(val route: String) {
     data object Home : Route("home")
     data object Cart : Route("cart")
+
     data object Detail : Route("detail/{id}") {
         fun build(id: Long) = "detail/$id"
-        val argName = "id"
     }
+
     data object OrderSummary : Route("order_summary/{orderId}") {
         fun build(orderId: Long) = "order_summary/$orderId"
     }

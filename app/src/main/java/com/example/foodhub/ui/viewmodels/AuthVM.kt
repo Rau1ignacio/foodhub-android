@@ -2,19 +2,20 @@ package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foodhub.data.local.entities.User
 import com.example.foodhub.core.utils.Validators
+import com.example.foodhub.data.local.entities.User
 import com.example.foodhub.data.repository.FoodRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+// 1. Definimos las clases de estado AQUÍ para que sean visibles
 data class AuthFormState(
     val name: String = "",
     val email: String = "",
     val pass: String = "",
-    val role: String = "CLIENT",
+    val role: String = "CLIENT", // Roles: CLIENT, ADMIN
     val nameError: String? = null,
     val emailError: String? = null,
     val passError: String? = null
@@ -28,17 +29,19 @@ data class AuthScreenState(
     val registrationSuccess: Boolean = false
 )
 
-class AuthVM(private val repo: FoodRepository, private val sessionVM: SessionVM) : ViewModel() {
+// 2. La clase ViewModel completa
+class AuthVM(
+    private val repo: FoodRepository,
+    private val sessionVM: SessionVM
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthScreenState())
     val state = _state.asStateFlow()
 
-    // --- VALIDACIÓN EN TIEMPO REAL ---
+    // --- FUNCIONES DE CAMBIO DE TEXTO (VALIDACIÓN) ---
 
     fun onNameChange(text: String) {
-        // 1. Validamos inmediatamente lo que el usuario escribe
         val error = Validators.name(text)?.message
-        // 2. Actualizamos el estado con el texto Y el error (si existe)
         _state.update { it.copy(
             form = it.form.copy(name = text, nameError = error),
             generalError = null
@@ -65,13 +68,11 @@ class AuthVM(private val repo: FoodRepository, private val sessionVM: SessionVM)
         _state.update { it.copy(form = it.form.copy(role = text)) }
     }
 
-    // --- ACCIONES DE BOTONES ---
+    // --- ACCIONES ---
 
     fun login() {
         val form = _state.value.form
-
-        // Validación final por si acaso el usuario apretó el botón muy rápido
-        // o si los campos estaban vacíos desde el inicio.
+        // Validar antes de enviar
         val emailError = Validators.email(form.email)?.message
         val passError = Validators.password(form.pass)?.message
 
@@ -85,15 +86,13 @@ class AuthVM(private val repo: FoodRepository, private val sessionVM: SessionVM)
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, generalError = null) }
 
+            // Llamada al repo
             val user = repo.login(form.email.trim(), form.pass)
 
             if (user != null) {
-                if (user.role != form.role) {
-                    _state.update { it.copy(isLoading = false, generalError = "El usuario no es ${form.role}") }
-                } else {
-                    sessionVM.onLoginSuccess(user)
-                    _state.update { it.copy(isLoading = false, loginSuccess = true) }
-                }
+                // Verificar rol si es necesario, aquí lo dejamos pasar
+                sessionVM.onLoginSuccess(user)
+                _state.update { it.copy(isLoading = false, loginSuccess = true) }
             } else {
                 _state.update { it.copy(isLoading = false, generalError = "Credenciales incorrectas") }
             }
@@ -102,8 +101,7 @@ class AuthVM(private val repo: FoodRepository, private val sessionVM: SessionVM)
 
     fun register() {
         val form = _state.value.form
-
-        // Validación final de todos los campos
+        // Validar todo
         val nameError = Validators.name(form.name)?.message
         val emailError = Validators.email(form.email)?.message
         val passError = Validators.password(form.pass)?.message
@@ -125,12 +123,13 @@ class AuthVM(private val repo: FoodRepository, private val sessionVM: SessionVM)
                 role = form.role
             )
 
-            val res = repo.registerUser(newUser)
+            // Llamada al repo
+            val res = repo.register(newUser)
 
             if (res != null) {
                 _state.update { it.copy(isLoading = false, registrationSuccess = true) }
             } else {
-                _state.update { it.copy(isLoading = false, generalError = "El correo ya existe") }
+                _state.update { it.copy(isLoading = false, generalError = "Error al registrar (¿correo duplicado?)") }
             }
         }
     }

@@ -1,6 +1,9 @@
 package com.example.foodhub
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -9,24 +12,31 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.MaterialTheme
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import com.example.foodhub.core.nav.AppNav
 import com.example.foodhub.data.local.AppDatabase
 import com.example.foodhub.data.repository.FoodRepository
-import com.example.foodhub.R
 
 class MainActivity : ComponentActivity() {
 
     private val db by lazy { AppDatabase.build(this) }
-    private val repo by lazy { FoodRepository(db.productDao(), db.userDao(), db.orderDao()) }
+
+    // CORRECCIÓN: Pasamos los 4 DAOs requeridos
+    private val repo by lazy {
+        FoodRepository(
+            productDao = db.productDao(),
+            cartDao = db.cartDao(),
+            orderDao = db.orderDao(),
+            userDao = db.userDao()
+        )
+    }
 
     private val requestPostNotifications =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) {  }
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestNotificationPermission()
+        createNotificationChannel()
+
         setContent {
             MaterialTheme {
                 AppNav(repo = repo)
@@ -34,27 +44,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestPostNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel("orders_channel", "Pedidos", NotificationManager.IMPORTANCE_DEFAULT)
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
         }
-    }
-
-    fun showOrderNotification(total: Int) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            return
-        }
-
-        val notif = NotificationCompat.Builder(this, "orders_channel")
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Pedido confirmado")
-            .setContentText("Total $$total. ¡Gracias por comprar en FoodHub!")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .build()
-
-        NotificationManagerCompat.from(this).notify(1, notif)
     }
 }

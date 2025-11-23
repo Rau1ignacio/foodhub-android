@@ -1,14 +1,26 @@
 package com.example.foodhub.ui.main
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,7 +36,7 @@ import com.example.foodhub.ui.viewmodels.CartVM
 import com.example.foodhub.ui.viewmodels.SessionVM
 import com.example.foodhub.ui.viewmodels.ViewModelFactoryWithSession
 
-// Define la estructura de un item de la barra de navegación inferior
+// Estructura de un item de la barra de navegación inferior
 data class BottomNavItem(
     val label: String,
     val route: String,
@@ -35,39 +47,36 @@ data class BottomNavItem(
 @Composable
 fun MainScreen(
     repo: FoodRepository,
-    sessionVM: SessionVM, // Recibe el VM de Sesión (para saber el rol)
-    onLogout: () -> Unit // Callback para cerrar sesión
+    sessionVM: SessionVM, // VM de sesión para conocer al usuario y su rol
+    onLogout: () -> Unit  // Callback de cierre de sesión
 ) {
-    // Controlador de navegación para la barra inferior (Home, Carrito, Admin)
     val navController = rememberNavController()
+
+    // Factory que inyecta repo + sessionVM a los ViewModels
     val factoryWithSession = ViewModelFactoryWithSession(repo, sessionVM)
 
-    // Instancia el CartVM aquí. Será compartido por MainNavGraph.
+    // CartVM compartido entre MainScreen y MainNavGraph
     val cartVM: CartVM = viewModel(factory = factoryWithSession)
 
-    // Observa estados clave
-    val cartState by cartVM.cartState.collectAsState() // Para el badge del carrito
-    val sessionState by sessionVM.state.collectAsState() // Para el rol del usuario
+    // Estados observados
+    val cartState by cartVM.cartState.collectAsState()
+    val sessionState by sessionVM.state.collectAsState()
     val currentUser = sessionState.loggedInUser
 
-    // Lista de items de la barra inferior
+    // Items de la barra inferior
     val bottomNavItems = listOf(
-        BottomNavItem("Home", Route.Home.route, Icons.Default.Home),
-        BottomNavItem("Carrito", Route.Cart.route, Icons.Default.ShoppingCart),
-        BottomNavItem(
-            "Admin",
-            Route.Admin.route,
-            Icons.Default.AdminPanelSettings
-        ) // Pestaña de Admin
+        BottomNavItem("Home", Route.Home.route, Icons.Filled.Home),
+        BottomNavItem("Carrito", Route.Cart.route, Icons.Filled.ShoppingCart),
+        BottomNavItem("Admin", Route.Admin.route, Icons.Filled.AdminPanelSettings)
     )
 
     Scaffold(
-        // --- BARRA SUPERIOR ---
+        // ----------------- TOP BAR -----------------
         topBar = {
             TopAppBar(
                 title = { Text("Food Hub") },
                 actions = {
-                    // Muestra el rol actual (para debug)
+                    // Rol actual (útil para debug / feedback visual)
                     currentUser?.let { user ->
                         Text(
                             text = "Rol: ${user.role}",
@@ -77,18 +86,25 @@ fun MainScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    // Botón Historial
+                    // Historial de pedidos
                     IconButton(onClick = { navController.navigate("history") }) {
-                        Icon(Icons.Default.History, contentDescription = "Historial de Pedidos")
+                        Icon(
+                            imageVector = Icons.Filled.History,
+                            contentDescription = "Historial de Pedidos"
+                        )
                     }
-                    // Botón Cerrar Sesión
+                    // Cerrar sesión
                     IconButton(onClick = onLogout) {
-                        Icon(Icons.Default.Logout, contentDescription = "Cerrar Sesión")
+                        Icon(
+                            imageVector = Icons.Filled.Logout,
+                            contentDescription = "Cerrar Sesión"
+                        )
                     }
                 }
             )
         },
-        // --- BARRA INFERIOR ---
+
+        // ----------------- BOTTOM BAR -----------------
         bottomBar = {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -97,17 +113,15 @@ fun MainScreen(
                 bottomNavItems.forEach { item ->
                     val isAdminRoute = item.route == Route.Admin.route
 
-                    // --- LÓGICA DE ROLES ---
-                    // Si el item es "Admin" Y el usuario NO es "ADMIN",
-                    // simplemente no se renderiza el item (se omite).
+                    // Si la pestaña es Admin y el usuario NO es ADMIN, no se muestra
                     if (isAdminRoute && currentUser?.role != "ADMIN") {
-                        // No renderiza nada
+                        // no renderizamos el item
                     } else {
-                        // Renderiza el item normal
                         NavigationBarItem(
-                            selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                            selected = currentDestination
+                                ?.hierarchy
+                                ?.any { it.route == item.route } == true,
                             onClick = {
-                                // Lógica de navegación de la barra inferior
                                 navController.navigate(item.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
@@ -118,9 +132,12 @@ fun MainScreen(
                             },
                             label = { Text(item.label) },
                             icon = {
-                                // (Aquí debería estar tu BadgedBox para el ícono del carrito)
-                                // ej: if (item.route == Route.Cart.route) { ... }
-                                Icon(item.icon, contentDescription = item.label)
+                                // Aquí podrías meter un BadgedBox para mostrar cantidad del carrito
+                                // usando cartState.totalItems, por ejemplo.
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label
+                                )
                             }
                         )
                     }
@@ -128,15 +145,15 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
-        // --- CONTENIDO PRINCIPAL ---
-        // Aquí se "dibuja" el NavHost (MainNavGraph) en el espacio
-        // que deja el Scaffold (entre la TopBar y la BottomBar).
-        MainNavGraph(
-            modifier = Modifier.padding(innerPadding),
-            navController = navController,
-            repo = repo,
-            sessionVM = sessionVM,
-            cartVM = cartVM // Pasa el CartVM compartido
-        )
+        // ----------------- CONTENIDO PRINCIPAL -----------------
+        Box(modifier = Modifier.padding(innerPadding)) {
+            MainNavGraph(
+                navController = navController,
+                repo = repo,
+                modifier = Modifier,   // ya recibimos el padding en el Box
+                sessionVM = sessionVM,
+                cartVM = cartVM
+            )
+        }
     }
 }

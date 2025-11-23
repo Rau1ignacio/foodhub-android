@@ -23,7 +23,7 @@ class  FoodHubApp : Application() {
                 description = "Notificaciones sobre confirmación de pedidos"
             }
             // Registrar el canal en el sistema
-            val notificationManager = getSystemService(NotificationManager::class.java)
+             val notificationManager = getSystemService(NotificationManager::class.java)
             notificationManager.createNotificationChannel(channel)
         }
     }

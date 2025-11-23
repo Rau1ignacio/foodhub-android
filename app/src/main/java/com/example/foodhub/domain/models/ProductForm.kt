@@ -1,8 +1,9 @@
 package com.example.foodhub.domain.models
 
+import com.example.foodhub.data.local.entities.Product
 import com.example.foodhub.core.utils.FieldError
 import com.example.foodhub.core.utils.Validators
-import com.example.foodhub.data.local.entities.Product
+
 
 // Modelo de dominio que representa el formulario de producto usado en la interfaz
 data class ProductForm(
@@ -12,7 +13,7 @@ data class ProductForm(
     val stock: String = "", // Stock ingresado como texto
     val category: String = "", // Categoría del producto
     val available: Boolean = true, // Indica si el producto está disponible
-    val photoUri: String? = null, // Imagen del producto (opcional)
+    val imageUrl: String? = null, // Imagen del producto (opcional)
 ) {
 
     // Valida los campos del formulario y devuelve un mapa de errores por campo
@@ -33,6 +34,6 @@ data class ProductForm(
         stock = stock.trim().toInt(),
         category = category.trim(),
         available = available,
-        photoUri = photoUri
+        imageUrl = imageUrl.toString(),
     )
 }

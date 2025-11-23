@@ -1,10 +1,16 @@
 package com.example.foodhub.data.local.entities
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 
-// Entidad que representa un ítem en el carrito de compras
-@Entity(primaryKeys = ["productId"])
+@Entity(tableName = "cart_items")
 data class CartItem(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+
     val productId: Long,
-    val quantity: Int
+    val name: String,
+    val price: Int,
+    val quantity: Int,
+    val imageUrl: String?
 )

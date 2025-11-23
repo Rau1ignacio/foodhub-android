@@ -1,94 +1,110 @@
 package com.example.foodhub.ui.auth
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.foodhub.ui.viewmodels.AuthScreenState
 import com.example.foodhub.ui.viewmodels.AuthVM
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
     vm: AuthVM,
-    state: com.example.foodhub.ui.viewmodels.AuthScreenState,
+    state: AuthScreenState,
     onNavigateToLogin: () -> Unit
 ) {
-    val form = state.form
     val roles = listOf("CLIENT", "ADMIN")
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center
     ) {
-        Text("Crear Cuenta", style = MaterialTheme.typography.headlineLarge)
-        Spacer(Modifier.height(24.dp))
+        Text("Registro", style = MaterialTheme.typography.headlineMedium)
 
-        Text("Registrarse como:", style = MaterialTheme.typography.labelLarge)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-            roles.forEach { role ->
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // SELECCIÓN DE ROL
+        Text("Selecciona un Rol:")
+        LazyRow {
+            items(roles) { role ->
                 FilterChip(
-                    selected = form.role == role,
+                    selected = state.form.role == role,
                     onClick = { vm.onRoleChange(role) },
-                    label = { Text(if (role == "CLIENT") "Cliente" else "Admin") }
+                    label = { Text(role) },
+                    modifier = Modifier.padding(end = 8.dp)
                 )
             }
         }
-        Spacer(Modifier.height(16.dp))
 
-        // --- NOMBRE ---
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // NOMBRE
         OutlinedTextField(
-            value = form.name,
-            onValueChange = { vm.onNameChange(it) },
+            value = state.form.name,
+            onValueChange = { text -> vm.onNameChange(text) },
             label = { Text("Nombre") },
-            isError = form.nameError != null,
-            modifier = Modifier.fillMaxWidth(),
-            supportingText = { if (form.nameError != null) Text(form.nameError, color = MaterialTheme.colorScheme.error) }
+            isError = state.form.nameError != null,
+            modifier = Modifier.fillMaxWidth()
         )
-
-        // --- EMAIL ---
-        OutlinedTextField(
-            value = form.email,
-            onValueChange = { vm.onEmailChange(it) },
-            label = { Text("Email") },
-            isError = form.emailError != null,
-            modifier = Modifier.fillMaxWidth(),
-            supportingText = { if (form.emailError != null) Text(form.emailError, color = MaterialTheme.colorScheme.error) }
-        )
-
-        // --- PASSWORD ---
-        OutlinedTextField(
-            value = form.pass,
-            onValueChange = { vm.onPasswordChange(it) },
-            label = { Text("Contraseña (mín. 6 caracteres)") },
-            isError = form.passError != null,
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            supportingText = { if (form.passError != null) Text(form.passError, color = MaterialTheme.colorScheme.error) }
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        if (state.isLoading) CircularProgressIndicator(modifier = Modifier.padding(vertical = 8.dp))
-
-        state.generalError?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
+        state.form.nameError?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // EMAIL
+        OutlinedTextField(
+            value = state.form.email,
+            onValueChange = { text -> vm.onEmailChange(text) },
+            label = { Text("Email") },
+            isError = state.form.emailError != null,
+            modifier = Modifier.fillMaxWidth()
+        )
+        state.form.emailError?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // PASSWORD
+        OutlinedTextField(
+            value = state.form.pass,
+            onValueChange = { text -> vm.onPasswordChange(text) },
+            label = { Text("Contraseña") },
+            visualTransformation = PasswordVisualTransformation(),
+            isError = state.form.passError != null,
+            modifier = Modifier.fillMaxWidth()
+        )
+        state.form.passError?.let {
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
+
+        // ERROR GENERAL
+        state.generalError?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = it, color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = { vm.register() },
-            enabled = !state.isLoading,
-            modifier = Modifier.fillMaxWidth().height(48.dp)
-        ) { Text("Registrarse") }
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !state.isLoading
+        ) {
+            Text(if (state.isLoading) "Registrando..." else "Crear Cuenta")
+        }
 
-        TextButton(onClick = onNavigateToLogin, enabled = !state.isLoading) {
-            Text("¿Ya tienes cuenta? Inicia Sesión")
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextButton(onClick = onNavigateToLogin) {
+            Text("Ya tengo cuenta. Iniciar Sesión")
         }
     }
 }

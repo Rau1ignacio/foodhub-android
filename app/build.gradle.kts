@@ -86,10 +86,16 @@ dependencies {
     implementation(libs.androidx.navigation.compose)            // Para navegar entre pantallas (Composables).
     implementation(libs.coil.compose)                           // Carga eficiente de imágenes (ej. desde URLs).
     implementation(libs.androidx.room.runtime)                  // Base de datos local (Room).
-    implementation(libs.androidx.room.ktx)                      // Extensiones de Kotlin para Room (Coroutines).
+    implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.play.services.analytics.impl)                      // Extensiones de Kotlin para Room (Coroutines).
     ksp(libs.androidx.room.compiler)                            // Compilador de Room (genera el código de la BD).
     implementation(libs.androidx.lifecycle.viewmodel.compose)   // Integra ViewModel con Compose.
     implementation(libs.androidx.lifecycle.viewmodel.ktx)       // Utilidades para ViewModel.
+
+    // Retrofit (Para conectarse a internet)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     // --- Dependencias de Pruebas (Testing) ---
     // Pruebas unitarias (locales, en JVM).
@@ -100,4 +106,6 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))   // BOM para pruebas de Compose.
     androidTestImplementation(libs.androidx.ui.test.junit4)          // Herramientas para probar UI de Compose.
     debugImplementation(libs.androidx.ui.test.manifest)              // Manifiesto para pruebas de debug.
+
+
 }
