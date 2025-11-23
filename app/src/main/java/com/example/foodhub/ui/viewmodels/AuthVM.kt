@@ -2,118 +2,140 @@ package com.example.foodhub.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.foodhub.core.utils.Validators // Importa las reglas de validación
 import com.example.foodhub.data.local.entities.User
+import com.example.foodhub.core.utils.Validators
 import com.example.foodhub.data.repository.FoodRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Estado: Datos del formulario de autenticación y sus errores. */
 data class AuthFormState(
     val name: String = "",
     val email: String = "",
     val pass: String = "",
-    val role: String = "CLIENT", // Rol seleccionado
+    val role: String = "CLIENT",
     val nameError: String? = null,
     val emailError: String? = null,
     val passError: String? = null
 )
 
-/** Estado: Estado completo de la pantalla (form, carga, errores, éxito). */
 data class AuthScreenState(
     val form: AuthFormState = AuthFormState(),
-    val isLoading: Boolean = false, // Para mostrar un spinner
-    val generalError: String? = null, // Ej. "Credenciales incorrectas"
-    val loginSuccess: Boolean = false, // Bandera para navegar
-    val registrationSuccess: Boolean = false // Bandera para navegar
+    val isLoading: Boolean = false,
+    val generalError: String? = null,
+    val loginSuccess: Boolean = false,
+    val registrationSuccess: Boolean = false
 )
 
-/**
- * ViewModel para Login y Registro.
- * Recibe 'repo' (para la BD) y 'sessionVM' (para actualizar la sesión global).
- */
-class AuthVM(
-    private val repo: FoodRepository,
-    private val sessionVM: SessionVM
-) : ViewModel() {
+class AuthVM(private val repo: FoodRepository, private val sessionVM: SessionVM) : ViewModel() {
 
-    // Estado principal que la UI observa
     private val _state = MutableStateFlow(AuthScreenState())
     val state = _state.asStateFlow()
 
-    /** Evento: La UI lo llama al cambiar el formulario. Limpia el error general. */
-    fun onFormChange(form: AuthFormState) {
-        _state.update { it.copy(form = form, generalError = null) }
+    // --- VALIDACIÓN EN TIEMPO REAL ---
+
+    fun onNameChange(text: String) {
+        // 1. Validamos inmediatamente lo que el usuario escribe
+        val error = Validators.name(text)?.message
+        // 2. Actualizamos el estado con el texto Y el error (si existe)
+        _state.update { it.copy(
+            form = it.form.copy(name = text, nameError = error),
+            generalError = null
+        )}
     }
 
-    /** Evento: Intenta iniciar sesión. */
+    fun onEmailChange(text: String) {
+        val error = Validators.email(text)?.message
+        _state.update { it.copy(
+            form = it.form.copy(email = text, emailError = error),
+            generalError = null
+        )}
+    }
+
+    fun onPasswordChange(text: String) {
+        val error = Validators.password(text)?.message
+        _state.update { it.copy(
+            form = it.form.copy(pass = text, passError = error),
+            generalError = null
+        )}
+    }
+
+    fun onRoleChange(text: String) {
+        _state.update { it.copy(form = it.form.copy(role = text)) }
+    }
+
+    // --- ACCIONES DE BOTONES ---
+
     fun login() {
         val form = _state.value.form
-        // 1. Validar campos
-        val emailError = Validators.email(form.email)
-        val passError = Validators.password(form.pass)
 
-        // 2. Mostrar errores de campos
-        _state.update { it.copy(form = form.copy(emailError = emailError?.message, passError = passError?.message)) }
+        // Validación final por si acaso el usuario apretó el botón muy rápido
+        // o si los campos estaban vacíos desde el inicio.
+        val emailError = Validators.email(form.email)?.message
+        val passError = Validators.password(form.pass)?.message
 
-        // 3. Detener si hay errores de validación
-        if (emailError != null || passError != null) return
+        if (emailError != null || passError != null) {
+            _state.update { it.copy(
+                form = form.copy(emailError = emailError, passError = passError)
+            )}
+            return
+        }
 
-        // 4. Iniciar lógica de login (en corutina)
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, generalError = null) } // Activa spinner
-            val user = repo.findUserByEmail(form.email.trim())
+            _state.update { it.copy(isLoading = true, generalError = null) }
 
-            // 5. Verificar usuario, contraseña Y ROL
-            if (user == null || user.passwordHash != form.pass || user.role != form.role) {
-                // Error
-                _state.update { it.copy(isLoading = false, generalError = "Credenciales incorrectas para el rol seleccionado.") }
+            val user = repo.login(form.email.trim(), form.pass)
+
+            if (user != null) {
+                if (user.role != form.role) {
+                    _state.update { it.copy(isLoading = false, generalError = "El usuario no es ${form.role}") }
+                } else {
+                    sessionVM.onLoginSuccess(user)
+                    _state.update { it.copy(isLoading = false, loginSuccess = true) }
+                }
             } else {
-                // Éxito
-                sessionVM.onLoginSuccess(user) // Actualiza la sesión global
-                _state.update { it.copy(isLoading = false, loginSuccess = true) } // Activa bandera de navegación
+                _state.update { it.copy(isLoading = false, generalError = "Credenciales incorrectas") }
             }
         }
     }
 
-    /** Evento: Intenta registrar un usuario. */
     fun register() {
         val form = _state.value.form
 
-        // 1. Validar todos los campos
-        val nameError = Validators.name(form.name)
-        val emailError = Validators.email(form.email)
-        val passError = Validators.password(form.pass)
+        // Validación final de todos los campos
+        val nameError = Validators.name(form.name)?.message
+        val emailError = Validators.email(form.email)?.message
+        val passError = Validators.password(form.pass)?.message
 
-        // 2. Mostrar errores de campos
-        _state.update {
-            it.copy(form = form.copy(nameError = nameError?.message, emailError = emailError?.message, passError = passError?.message))
+        if (nameError != null || emailError != null || passError != null) {
+            _state.update { it.copy(
+                form = form.copy(nameError = nameError, emailError = emailError, passError = passError)
+            )}
+            return
         }
 
-        // 3. Detener si hay errores de validación
-        if (nameError != null || emailError != null || passError != null) return
-
-        // 4. Iniciar lógica de registro (en corutina)
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, generalError = null) } // Activa spinner
+            _state.update { it.copy(isLoading = true, generalError = null) }
 
-            // 5. Verificar si el email ya existe
-            if (repo.findUserByEmail(form.email.trim()) != null) {
-                // Error
-                _state.update { it.copy(isLoading = false, generalError = "El correo ya está registrado") }
-            } else {
-                // Éxito
-                val newUser = User(name = form.name.trim(), email = form.email.trim(), passwordHash = form.pass, role = form.role)
-                repo.registerUser(newUser)
+            val newUser = User(
+                name = form.name.trim(),
+                email = form.email.trim(),
+                password = form.pass,
+                role = form.role
+            )
+
+            val res = repo.registerUser(newUser)
+
+            if (res != null) {
                 _state.update { it.copy(isLoading = false, registrationSuccess = true) }
+            } else {
+                _state.update { it.copy(isLoading = false, generalError = "El correo ya existe") }
             }
         }
     }
 
-    /** Evento: La UI lo llama DESPUÉS de navegar, para resetear las banderas de éxito. */
     fun onNavigationDone() {
-        _state.update { it.copy(loginSuccess = false, registrationSuccess = false, generalError = null) }
+        _state.update { it.copy(loginSuccess = false, registrationSuccess = false) }
     }
 }
