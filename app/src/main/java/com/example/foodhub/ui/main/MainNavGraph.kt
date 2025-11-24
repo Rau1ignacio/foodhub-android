@@ -2,11 +2,7 @@ package com.example.foodhub.ui.main
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -17,17 +13,17 @@ import com.example.foodhub.core.nav.Route
 import com.example.foodhub.data.repository.FoodRepository
 import com.example.foodhub.ui.admin.AdminListScreen
 import com.example.foodhub.ui.admin.AdminProductFormScreen
-import com.example.foodhub.ui.auth.LoginScreen
-import com.example.foodhub.ui.auth.RegisterScreen
 import com.example.foodhub.ui.cart.CartScreen
 import com.example.foodhub.ui.detail.DetailScreen
+import com.example.foodhub.ui.history.OrderHistoryScreen
 import com.example.foodhub.ui.home.HomeScreen
 import com.example.foodhub.ui.viewmodels.AdminVM
-import com.example.foodhub.ui.viewmodels.AuthVM
 import com.example.foodhub.ui.viewmodels.CartVM
 import com.example.foodhub.ui.viewmodels.DetailVM
+import com.example.foodhub.ui.viewmodels.OrderHistoryVM
 import com.example.foodhub.ui.viewmodels.SessionVM
 import com.example.foodhub.ui.viewmodels.ViewModelFactory
+import com.example.foodhub.ui.viewmodels.ViewModelFactoryWithSession
 
 @Composable
 fun MainNavGraph(
@@ -37,90 +33,44 @@ fun MainNavGraph(
     sessionVM: SessionVM,
     cartVM: CartVM
 ) {
-    // AuthVM que conoce el repositorio y la sesión
-    val authVM: AuthVM = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return AuthVM(repo, sessionVM) as T
-            }
-        }
-    )
+    // Fábrica para VMs que necesitan repo + session
+    val factoryWithSession = ViewModelFactoryWithSession(repo, sessionVM)
 
-    // VM para la parte de administración de productos
+    // VM para administración de productos (solo necesita repo)
     val adminVM: AdminVM = viewModel(factory = ViewModelFactory(repo))
 
     NavHost(
         navController = navController,
-        startDestination = "login",
+        // 👇 Ya estamos logueados, empezamos en Home
+        startDestination = Route.Home.route,
         modifier = modifier
     ) {
-
-        // ----------------- LOGIN -----------------
-        composable("login") {
-            val state by authVM.state.collectAsState()
-
-            // Si el login fue exitoso, vamos al Home
-            LaunchedEffect(state.loginSuccess) {
-                if (state.loginSuccess) {
-                    authVM.onNavigationDone()
-                    navController.navigate(Route.Home.route) {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }
-            }
-
-            LoginScreen(
-                vm = authVM,
-                state = state,
-                onNavigateToRegister = { navController.navigate("register") }
-            )
-        }
-
-        // ----------------- REGISTER -----------------
-        composable("register") {
-            val state by authVM.state.collectAsState()
-
-            LaunchedEffect(state.registrationSuccess) {
-                if (state.registrationSuccess) {
-                    authVM.onNavigationDone()
-                    navController.popBackStack() // volvemos al login
-                }
-            }
-
-            RegisterScreen(
-                vm = authVM,
-                state = state,
-                onNavigateToLogin = { navController.popBackStack() }
-            )
-        }
-
         // ----------------- HOME -----------------
         composable(Route.Home.route) {
             HomeScreen(
                 repo = repo,
                 onProductClick = { productId ->
-                    navController.navigate("detail/$productId")
+                    // Usamos el helper de la sealed class Route
+                    navController.navigate(Route.Detail.build(productId))
                 }
             )
         }
 
         // ----------------- DETAIL -----------------
         composable(
-            route = Route.Detail.route,
+            route = Route.Detail.route, // "detail/{id}"
             arguments = listOf(navArgument("id") { type = NavType.LongType })
         ) { backStackEntry ->
             val productId = backStackEntry.arguments?.getLong("id") ?: 0L
 
-            // 1. Creamos el ViewModel específico para Detalle aquí
+            // VM específico para la pantalla de detalle
             val detailVM: DetailVM = viewModel(factory = ViewModelFactory(repo))
 
-            // 2. Cargamos el producto cuando entramos a la pantalla
+            // Cargamos el producto al entrar
             LaunchedEffect(productId) {
                 detailVM.loadProduct(productId)
             }
 
-            // 3. Pasamos los ViewModels a la pantalla
             DetailScreen(
                 detailVM = detailVM,
                 cartVM = cartVM,
@@ -133,7 +83,7 @@ fun MainNavGraph(
             CartScreen(
                 vm = cartVM,
                 onOrderConfirmed = {
-                    // Después de confirmar pedido, volvemos al Home
+                    // De momento volvemos al Home (más adelante puedes ir a OrderSummary)
                     navController.navigate(Route.Home.route) {
                         popUpTo(Route.Home.route) { inclusive = true }
                     }
@@ -167,10 +117,15 @@ fun MainNavGraph(
             )
         }
 
-        // ----------------- HISTORY (placeholder) -----------------
+        // ----------------- HISTORY -----------------
         composable("history") {
-            // Aquí iría tu OrderHistoryScreen cuando lo tengas listo
-            // OrderHistoryScreen(...)
+            val orderHistoryVM: OrderHistoryVM =
+                viewModel(factory = factoryWithSession)
+
+            OrderHistoryScreen(
+                vm = orderHistoryVM,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }
