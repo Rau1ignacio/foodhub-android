@@ -18,19 +18,19 @@ class OrderHistoryVM(
 ) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val state: StateFlow<OrderHistoryState> = sessionVM.state.flatMapLatest { sessionState ->
-        val user = sessionState.loggedInUser
-        if (user != null) {
-            // repo.getOrdersForUser devuelve Flow<List<Order>>
-            repo.getOrdersForUser(user.id).map { ordersList ->
-                OrderHistoryState(orders = ordersList, isLoading = false)
+    val state: StateFlow<OrderHistoryState> =
+        sessionVM.state.flatMapLatest { sessionState ->
+            val user = sessionState.loggedInUser
+            if (user != null) {
+                repo.getOrdersForUser(user.id).map { ordersList ->
+                    OrderHistoryState(orders = ordersList, isLoading = false)
+                }
+            } else {
+                flowOf(OrderHistoryState(isLoading = false))
             }
-        } else {
-            flowOf(OrderHistoryState(isLoading = false))
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = OrderHistoryState()
-    )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = OrderHistoryState()
+        )
 }

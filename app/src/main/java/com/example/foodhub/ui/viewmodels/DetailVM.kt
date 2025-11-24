@@ -8,15 +8,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class DetailVM(private val repo: FoodRepository) : ViewModel() {
+class DetailVM(
+    private val repo: FoodRepository
+) : ViewModel() {
 
     private val _product = MutableStateFlow<Product?>(null)
     val product: StateFlow<Product?> = _product
 
     fun loadProduct(id: Long) {
         viewModelScope.launch {
-            val p = repo.getProductById(id)
-            _product.value = p
+            _product.value = repo.getProductById(id)
         }
     }
 }

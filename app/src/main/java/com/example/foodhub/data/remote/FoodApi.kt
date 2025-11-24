@@ -1,5 +1,6 @@
 package com.example.foodhub.data.network
 
+import com.example.foodhub.data.local.dao.LoginRequestDto
 import com.example.foodhub.data.local.entities.CartItem
 import com.example.foodhub.data.local.entities.Order
 import com.example.foodhub.data.local.entities.Product
@@ -16,7 +17,7 @@ data class AddToCartRequest(
 interface FoodApi {
 
     // --- PRODUCTOS (General) ---
-    @GET("api/products")
+    @GET("/api/products")
     suspend fun getProducts(): List<Product>
 
     @GET("api/products/{id}")
@@ -33,11 +34,11 @@ interface FoodApi {
     suspend fun deleteProduct(@Path("id") id: Long)
 
     // --- AUTH ---
-    @POST("api/auth/login")
-    suspend fun login(@Body body: Map<String, String>): User
-
-    @POST("api/auth/register")
+    @POST("/api/auth/register")
     suspend fun register(@Body user: User): User
+
+    @POST("/api/auth/login")
+    suspend fun login(@Body loginRequest: LoginRequestDto): User
 
     // --- CARRITO ---
     @GET("api/cart/{userId}")

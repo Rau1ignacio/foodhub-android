@@ -8,76 +8,120 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.foodhub.data.local.entities.Product
 import com.example.foodhub.ui.viewmodels.AdminVM
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminListScreen(
     vm: AdminVM,
-    onAddProduct: () -> Unit,
-    onEditProduct: (Long) -> Unit
+    onEditProduct: (Long) -> Unit,
+    onAddProduct: () -> Unit
 ) {
     val products by vm.products.collectAsState()
-    val productToDelete by vm.productToDelete.collectAsState()
-
-    // --- DIÁLOGO DE CONFIRMACIÓN ---
-    productToDelete?.let { product ->
-        AlertDialog(
-            onDismissRequest = { vm.onDeleteCancelled() },
-            title = { Text("Confirmar Borrado") },
-            text = { Text("¿Estás seguro de que quieres eliminar '${product.name}'?") },
-            confirmButton = {
-                Button(
-                    onClick = { vm.onDeleteConfirmed() },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("Eliminar") }
-            },
-            dismissButton = {
-                OutlinedButton(onClick = { vm.onDeleteCancelled() }) { Text("Cancelar") }
-            }
-        )
-    }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Gestión de Productos") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddProduct) {
-                Icon(Icons.Default.Add, contentDescription = "Añadir")
+                Icon(Icons.Default.Add, contentDescription = "Agregar producto")
             }
         }
     ) { padding ->
-        if (products.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No hay productos. ¡Añade uno nuevo!")
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(products, key = { it.id }) { product ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        ListItem(
-                            headlineContent = { Text(product.name) },
-                            supportingContent = { Text("Stock: ${product.stock} | Precio: $${product.price}") },
-                            trailingContent = {
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    IconButton(onClick = { onEditProduct(product.id) }) {
-                                        Icon(Icons.Default.Edit, "Editar")
-                                    }
-                                    IconButton(onClick = { vm.onDeleteTriggered(product) }) {
-                                        Icon(Icons.Default.Delete, "Borrar", tint = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            }
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxSize()
+        ) {
+            Text(
+                text = "Administrar productos",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Crea, edita y elimina productos del catálogo.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (products.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No hay productos registrados.")
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(products) { product ->
+                        AdminProductRow(
+                            product = product,
+                            onEdit = { onEditProduct(product.id) },
+                            onDelete = { vm.deleteProduct(product.id) }
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdminProductRow(
+    product: Product,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${product.category} • $${product.price}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = if (product.stock > 0) "Stock: ${product.stock}" else "Agotado",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (product.stock > 0)
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        MaterialTheme.colorScheme.error
+                )
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar")
+            }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Eliminar",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

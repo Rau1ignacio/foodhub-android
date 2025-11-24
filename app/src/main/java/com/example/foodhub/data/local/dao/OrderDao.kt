@@ -4,11 +4,12 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
 import com.example.foodhub.data.local.entities.Order
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OrderDao {
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(order: Order): Long
 

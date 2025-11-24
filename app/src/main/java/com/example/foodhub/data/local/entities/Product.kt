@@ -6,12 +6,16 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "products")
 data class Product(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,
-    val price: Int,
+    val id: Long = 0L,
+
+    val name: String = "",
     val description: String = "",
-    val stock: Int = 0,
+    val price: Int = 0,
+    val imageUrl: String = "",
     val category: String = "Otros",
-    val available: Boolean = true,
-    val imageUrl: String = ""
-)
+    // Stock disponible
+    val stock: Int = 0
+) {
+    val isAvailable: Boolean
+        get() = stock > 0
+}

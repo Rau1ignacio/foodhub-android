@@ -4,68 +4,154 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.foodhub.ui.viewmodels.CartVM
 
+/**
+ * Pantalla de carrito:
+ * - Muestra los productos añadidos
+ * - Permite modificar cantidades (botones + y -)
+ * - Muestra total
+ * - Botón para confirmar compra
+ */
 @Composable
 fun CartScreen(
     vm: CartVM,
-    onOrderConfirmed: (Long) -> Unit
+    onOrderConfirmed: () -> Unit
 ) {
-    val state by vm.cartState.collectAsState()
+    val state by vm.state.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Tu Carrito", style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (state.items.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
-                Text("El carrito está vacío", color = Color.Gray)
-            }
-        } else {
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(state.items) { (product, item) ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(product.name, fontWeight = FontWeight.Bold)
-                            Text("${item.quantity} x $${product.price} = $${item.quantity * product.price}")
-                        }
-                        IconButton(onClick = { vm.removeFromCart(item) }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red)
-                        }
+    Scaffold(
+        bottomBar = {
+            if (state.items.isNotEmpty()) {
+                CartBottomBar(
+                    total = state.total,
+                    onConfirm = {
+                        vm.confirmOrder(onOrderConfirmed)
                     }
-                    Divider()
+                )
+            }
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(16.dp)
+                .fillMaxSize()
+        ) {
+            Text(
+                text = "Carrito",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (state.items.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Tu carrito está vacío.")
+                }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(state.items) { item ->
+                        CartItemRow(
+                            name = item.product.name,
+                            price = item.product.price,
+                            quantity = item.quantity,
+                            stock = item.product.stock,
+                            onIncrease = { vm.changeQuantity(item.id, item.quantity + 1) },
+                            onDecrease = { vm.changeQuantity(item.id, item.quantity - 1) }
+                        )
+                    }
                 }
             }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- RESUMEN Y BOTÓN ---
-            Text("Total: $${state.total}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    vm.confirmOrder(onOrderConfirmed = onOrderConfirmed)
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = state.items.isNotEmpty()
+@Composable
+private fun CartItemRow(
+    name: String,
+    price: Int,
+    quantity: Int,
+    stock: Int,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Confirmar Compra")
+                Text(name, fontWeight = FontWeight.SemiBold)
+                Text("Precio: $$price")
+                Text("Stock disponible: $stock")
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(
+                    onClick = onDecrease,
+                    enabled = quantity > 1
+                ) {
+                    Icon(Icons.Default.Remove, contentDescription = "Disminuir")
+                }
+                Text(quantity.toString())
+                IconButton(
+                    onClick = onIncrease,
+                    enabled = quantity < stock
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Aumentar")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartBottomBar(
+    total: Int,
+    onConfirm: () -> Unit
+) {
+    Surface(
+        tonalElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("Total", fontWeight = FontWeight.SemiBold)
+                Text("$ $total")
+            }
+            Button(onClick = onConfirm) {
+                Text("Confirmar compra")
             }
         }
     }

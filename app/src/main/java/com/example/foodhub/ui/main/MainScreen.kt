@@ -59,7 +59,7 @@ fun MainScreen(
     val cartVM: CartVM = viewModel(factory = factoryWithSession)
 
     // Estados observados
-    val cartState by cartVM.cartState.collectAsState()
+    val cartState by cartVM.state.collectAsState()
     val sessionState by sessionVM.state.collectAsState()
     val currentUser = sessionState.loggedInUser
 

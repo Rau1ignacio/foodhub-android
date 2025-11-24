@@ -1,16 +1,17 @@
 package com.example.foodhub.data.local.dao
 
 import androidx.room.*
-import kotlinx.coroutines.flow.Flow
 import com.example.foodhub.data.local.entities.Product
-import com.example.foodhub.data.local.entities.CartItem
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProductDao {
 
-    // --- PRODUCTOS (Caché Local) ---
     @Query("SELECT * FROM products ORDER BY id DESC")
     fun observeProducts(): Flow<List<Product>>
+
+    @Query("SELECT * FROM products ORDER BY id DESC")
+    suspend fun getAll(): List<Product>
 
     @Query("SELECT * FROM products WHERE id = :id")
     suspend fun getById(id: Long): Product?
@@ -27,17 +28,10 @@ interface ProductDao {
     @Delete
     suspend fun delete(product: Product)
 
-    // --- CARRITO (Local) ---
-    @Query("SELECT * FROM cart_items")
-    fun observeCartItems(): Flow<List<CartItem>>
+    @Query("DELETE FROM products")
+    suspend fun clearAll()
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertCartItem(item: CartItem)
-
-    @Delete
-    suspend fun deleteCartItem(item: CartItem)
-
-    @Query("DELETE FROM cart_items")
-    suspend fun clearCart()
-
+    // Reducir stock localmente sin que baje de 0
+    @Query("UPDATE products SET stock = MAX(stock - :quantity, 0) WHERE id = :productId")
+    suspend fun decreaseStock(productId: Long, quantity: Int)
 }

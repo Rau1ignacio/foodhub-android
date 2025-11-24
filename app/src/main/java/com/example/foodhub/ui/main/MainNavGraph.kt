@@ -20,6 +20,7 @@ import com.example.foodhub.ui.home.HomeScreen
 import com.example.foodhub.ui.viewmodels.AdminVM
 import com.example.foodhub.ui.viewmodels.CartVM
 import com.example.foodhub.ui.viewmodels.DetailVM
+import com.example.foodhub.ui.viewmodels.HomeVM
 import com.example.foodhub.ui.viewmodels.OrderHistoryVM
 import com.example.foodhub.ui.viewmodels.SessionVM
 import com.example.foodhub.ui.viewmodels.ViewModelFactory
@@ -39,6 +40,8 @@ fun MainNavGraph(
     // VM para administración de productos (solo necesita repo)
     val adminVM: AdminVM = viewModel(factory = ViewModelFactory(repo))
 
+    val homeVM: HomeVM = viewModel(factory = ViewModelFactory(repo))
+
     NavHost(
         navController = navController,
         // 👇 Ya estamos logueados, empezamos en Home
@@ -48,9 +51,9 @@ fun MainNavGraph(
         // ----------------- HOME -----------------
         composable(Route.Home.route) {
             HomeScreen(
-                repo = repo,
+                vm = homeVM,
+                cartVM = cartVM,
                 onProductClick = { productId ->
-                    // Usamos el helper de la sealed class Route
                     navController.navigate(Route.Detail.build(productId))
                 }
             )
