@@ -10,114 +10,128 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * Estado de la pantalla de Home:
- * - lista completa de productos
- * - lista filtrada
- * - categoría seleccionada
- * - texto de búsqueda
- */
 data class HomeState(
     val isLoading: Boolean = false,
+    val error: String? = null,
     val products: List<Product> = emptyList(),
-    val filteredProducts: List<Product> = emptyList(),
-    val selectedCategory: String = "Todos",
     val searchQuery: String = "",
-    val error: String? = null
+    val selectedCategory: String = "Todos",
+    val filteredProducts: List<Product> = emptyList()
 )
 
+/**
+ * ViewModel de Home:
+ * - Observa los productos de Room (repo.products).
+ * - Sincroniza con backend.
+ * - Aplica filtros por búsqueda y categoría.
+ */
 class HomeVM(
     private val repo: FoodRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(HomeState())
+    private val _state = MutableStateFlow(
+        HomeState(
+            isLoading = true
+        )
+    )
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
-    private val categories = listOf("Todos", "Frutas", "Verduras", "Lácteos", "Bebidas", "Otros")
-
     init {
-        loadProducts()
-    }
-
-    fun getCategories(): List<String> = categories
-
-    /**
-     * Carga la lista de productos desde el repositorio.
-     */
-    fun loadProducts() {
+        // 1) Observar cambios en productos de Room (altas/bajas desde Admin, etc.)
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            repo.products.collect { list ->
+                _state.update { current ->
+                    val base = current.copy(
+                        products = list
+                    )
+                    base.copy(
+                        filteredProducts = applyFilters(
+                            products = list,
+                            searchQuery = base.searchQuery,
+                            category = base.selectedCategory
+                        ),
+                        isLoading = false,
+                        error = null
+                    )
+                }
+            }
+        }
+
+        // 2) Sincronizar con el backend al iniciar
+        viewModelScope.launch {
             try {
-                val products = repo.getAllProducts()
+                repo.syncProductsFromBackend()
+            } catch (e: Exception) {
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        products = products,
-                        filteredProducts = applyFilters(
-                            products = products,
-                            category = it.selectedCategory,
-                            query = it.searchQuery
-                        )
+                        error = e.message ?: "Error al cargar productos"
                     )
                 }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
 
-    /**
-     * Se llama cuando el usuario selecciona una categoría (Frutas, Verduras, etc.)
-     */
+    private fun applyFilters(
+        products: List<Product>,
+        searchQuery: String,
+        category: String
+    ): List<Product> {
+        val q = searchQuery.trim().lowercase()
+
+        return products
+            .filter { product ->
+                // Filtrar por categoría
+                if (category == "Todos") true
+                else product.category == category
+            }
+            .filter { product ->
+                // Filtrar por búsqueda
+                if (q.isBlank()) true
+                else {
+                    product.name.lowercase().contains(q) ||
+                            product.description.lowercase().contains(q)
+                }
+            }
+    }
+
+    fun onSearchQueryChange(text: String) {
+        _state.update { current ->
+            val newState = current.copy(searchQuery = text)
+            newState.copy(
+                filteredProducts = applyFilters(
+                    products = newState.products,
+                    searchQuery = newState.searchQuery,
+                    category = newState.selectedCategory
+                )
+            )
+        }
+    }
+
     fun onCategorySelected(category: String) {
         _state.update { current ->
             val newState = current.copy(selectedCategory = category)
             newState.copy(
                 filteredProducts = applyFilters(
                     products = newState.products,
-                    category = category,
-                    query = newState.searchQuery
+                    searchQuery = newState.searchQuery,
+                    category = newState.selectedCategory
                 )
             )
         }
     }
 
     /**
-     * Se llama cuando el usuario escribe en el buscador.
+     * Devuelve las categorías disponibles para los chips:
+     * "Todos" + categorías distintas que existan en productos.
+     * (Ej: FRUTAS, VERDURAS, LACTEOS, BEBIDAS, OTROS)
      */
-    fun onSearchQueryChange(query: String) {
-        _state.update { current ->
-            val newState = current.copy(searchQuery = query)
-            newState.copy(
-                filteredProducts = applyFilters(
-                    products = newState.products,
-                    category = newState.selectedCategory,
-                    query = query
-                )
-            )
-        }
-    }
+    fun getCategories(): List<String> {
+        val dynamic = _state.value.products
+            .map { it.category }
+            .distinct()
+            .sorted()
 
-    /**
-     * Aplica simultáneamente:
-     * - filtro por categoría
-     * - búsqueda por texto
-     */
-    private fun applyFilters(
-        products: List<Product>,
-        category: String,
-        query: String
-    ): List<Product> {
-        return products
-            .asSequence()
-            .filter { p ->
-                (category == "Todos" || p.category.equals(category, ignoreCase = true))
-            }
-            .filter { p ->
-                query.isBlank() ||
-                        p.name.contains(query, ignoreCase = true) ||
-                        p.description.contains(query, ignoreCase = true)
-            }
-            .toList()
+        return listOf("Todos") + dynamic
     }
 }
