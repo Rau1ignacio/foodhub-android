@@ -2,7 +2,7 @@
 
 ## 1. Nombre del proyecto
 
-**FoodHub** – Aplicación móvil para la gestión de pedidos en minimarkets, con backend en **Spring Boot (Kotlin)** y frontend en **Android (Kotlin + Jetpack Compose)**. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}  
+**FoodHub** – Aplicación móvil para la gestión de pedidos en minimarkets, con backend en **Spring Boot (Kotlin)** y frontend en **Android (Kotlin + Jetpack Compose)**{index=1}  
 
 ---
 
@@ -24,37 +24,37 @@ La solución completa (app + microservicio) implementa las siguientes funcionali
 
 - **Autenticación de usuarios**
   - Registro de usuario nuevo (`RegisterScreen.kt`)
-  - Login de usuarios existentes (`LoginScreen.kt`) :contentReference[oaicite:2]{index=2}  
+  - Login de usuarios existentes (`LoginScreen.kt`) 
 - **Módulo cliente**
   - Visualización de catálogo de productos (`HomeScreen.kt`)
   - Vista de detalle de un producto (`DetailScreen.kt`)
   - Agregar productos al carrito (`CartScreen.kt`)
   - Ver resumen del pedido antes de confirmar (`OrderSummaryScreen.kt`)
-  - Historial de pedidos realizados (`OrderHistoryScreen.kt`) :contentReference[oaicite:3]{index=3}  
+  - Historial de pedidos realizados (`OrderHistoryScreen.kt`) 
 - **Módulo administrador**
   - Listado de productos administrables (`AdminListsScreen.kt`)
-  - Creación / edición de productos (`AdminProductFormScreen.kt`) :contentReference[oaicite:4]{index=4}  
+  - Creación / edición de productos (`AdminProductFormScreen.kt`) 
 - **Arquitectura**
   - Arquitectura **MVVM** con ViewModels dedicados: `AuthVM`, `HomeVM`, `DetailVM`, `CartVM`, `OrderHistoryVM`, `AdminVM`, `SessionVM`. :contentReference[oaicite:5]{index=5}  
-  - Capa de datos con **Room** (`AppDatabase`, DAOs y Entities) y consumo de API vía **Retrofit** (`FoodApi.kt`, `RetrofitClient`). :contentReference[oaicite:6]{index=6}  
+  - Capa de datos con **Room** (`AppDatabase`, DAOs y Entities) y consumo de API vía **Retrofit** (`FoodApi.kt`, `RetrofitClient`).
 
 ### Backend (Microservicio – Spring Boot 3 + Kotlin)
 
 - **Gestión de usuarios (Auth)**
   - Registro y login básico de usuarios.
-  - CRUD completo de usuarios con roles (`CLIENT` / `ADMIN`). :contentReference[oaicite:7]{index=7}  
+  - CRUD completo de usuarios con roles (`CLIENT` / `ADMIN`). 
 - **Gestión de productos**
   - CRUD completo de productos: crear, listar, actualizar y eliminar.
-  - Modelo `Product` con campos: `name`, `description`, `price`, `imageUrl`, `category`, `stock`, `available`. :contentReference[oaicite:8]{index=8}  
+  - Modelo `Product` con campos: `name`, `description`, `price`, `imageUrl`, `category`, `stock`, `available`. 
 - **Carrito de compras**
   - Agregar productos al carrito.
   - Listar carrito por usuario.
   - Actualizar cantidad de un ítem.
-  - Eliminar ítems y limpiar carrito al generar una orden. :contentReference[oaicite:9]{index=9}  
+  - Eliminar ítems y limpiar carrito al generar una orden. 
 - **Órdenes de compra**
   - Generación de una orden a partir del carrito del usuario.
   - Validación de stock, descuento de inventario y cálculo del total.
-  - Consulta de órdenes por usuario. :contentReference[oaicite:10]{index=10}  
+  - Consulta de órdenes por usuario.
 
 ---
 
@@ -62,7 +62,7 @@ La solución completa (app + microservicio) implementa las siguientes funcionali
 
 ### 4.1. Endpoints del microservicio backend (Spring Boot)
 
-#### Auth – `/api/auth` :contentReference[oaicite:11]{index=11}  
+#### Auth – `/api/auth` 
 
 - `POST /api/auth/register`  
   Registra un nuevo usuario.
@@ -84,7 +84,7 @@ La solución completa (app + microservicio) implementa las siguientes funcionali
 
 ---
 
-#### Productos – `/api/products` :contentReference[oaicite:12]{index=12}  
+#### Productos – `/api/products` 
 
 - `GET /api/products`  
   Lista todos los productos.
@@ -103,7 +103,7 @@ La solución completa (app + microservicio) implementa las siguientes funcionali
 
 ---
 
-#### Carrito – `/api/cart` :contentReference[oaicite:13]{index=13}  
+#### Carrito – `/api/cart` 
 
 - `GET /api/cart/{userId}`  
   Obtiene el carrito del usuario con `userId`.
