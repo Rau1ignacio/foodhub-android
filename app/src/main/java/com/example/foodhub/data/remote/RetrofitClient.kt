@@ -8,6 +8,9 @@ object RetrofitClient {
     // 10.0.2.2 es tu PC (Localhost) desde el emulador
     private const val BASE_URL = "http://10.0.2.2:8080/"
 
+    // 35.175.136.203:8080 Conexion hacia AWS
+    //private const val BASE_URL = "http://35.175.136.203:8080/"
+
     val api: FoodApi by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
