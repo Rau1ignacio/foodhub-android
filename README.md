@@ -1,73 +1,119 @@
-# Food Hub 🛒🥑
+# FoodHub – App móvil + Microservicio backend
 
-**Food Hub** es una aplicación móvil nativa para Android, desarrollada como un marketplace de alimentos locales. Conecta a pequeños comercios y emprendedores con clientes que buscan productos frescos, permitiendo una gestión de inventario local y un proceso de compra simplificado.
+## 1. Nombre del proyecto
 
-Este proyecto fue desarrollado utilizando **Jetpack Compose** (UI declarativa moderna) y una arquitectura limpia **MVVM + Clean Architecture**, enfocada en la escalabilidad, mantenibilidad y testabilidad del código.
-
-## 🌟 Funcionalidades Clave
-
-La aplicación se divide en dos roles principales con flujos de usuario diferenciados:
-
-### 👤 Flujo de Cliente
-* **Autenticación:** Sistema completo de Login y Registro de usuarios.
-* **Catálogo de Productos:** Pantalla principal (`HomeScreen`) donde se listan todos los productos disponibles.
-* **Detalle de Producto:** Vista detallada (`DetailScreen`) con información completa y botón para añadir al carrito.
-* **Carrito de Compras:** Gestión del carrito (`CartScreen`) para modificar cantidades, eliminar productos y confirmar el pedido.
-* **Resumen de Pedido:** Pantalla de confirmación (`OrderSummaryScreen`) al finalizar una compra.
-
-### 👨‍💼 Flujo de Administrador
-* **Gestión de Inventario:** Pantalla de administración (`AdminListScreen`) para ver, editar o eliminar productos existentes.
-* **Formulario CRUD:** Un formulario único (`AdminProductFormScreen`) para **Crear** y **Actualizar** productos.
-* **Validación de Formularios:** El formulario implementa lógica de validación robusta (en `domain/models/ProductForm.kt`) que muestra errores en tiempo real antes de permitir guardar.
-* **Uso de Recursos Nativos:** El administrador puede asignar una imagen al producto usando:
-    * La **Cámara** del dispositivo.
-    * La **Galería** de fotos.
+**FoodHub** – Aplicación móvil para la gestión de pedidos en minimarkets, con backend en **Spring Boot (Kotlin)** y frontend en **Android (Kotlin + Jetpack Compose)**. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}  
 
 ---
 
-## 🏗️ Arquitectura y Stack Tecnológico
+## 2. Integrantes
 
-El proyecto sigue los principios de **Clean Architecture** y **MVVM (Model-View-ViewModel)**, separando las responsabilidades en capas bien definidas.
+- Nombre 1 – Rol (por ejemplo: Desarrollador Android / Líder Técnico)
+- Nombre 2 – Rol (por ejemplo: Desarrollador Backend)
+- Nombre 3 – Rol (por ejemplo: QA / Soporte DevOps)
 
-* **`ui` (Capa de Presentación):** Contiene los **Composables** (Pantallas), **ViewModels** (gestionan el estado y la lógica de UI) y **Navegación** (`AppNav.kt`).
-    * **Jetpack Compose:** UI 100% nativa y declarativa.
-    * **Material 3:** Sistema de diseño moderno de Google.
-    * **Navigation Compose:** Para la navegación entre pantallas.
-    * **StateFlow / collectAsState:** Gestión de estado reactiva.
-* **`domain` (Capa de Dominio):** Contiene la lógica de negocio pura y los modelos (ej: `ProductForm.kt`), sin dependencias de Android. Aquí reside la lógica de validación de formularios.
-* **`data` (Capa de Datos):** Gestiona el origen de los datos.
-    * **Room (sobre SQLite):** Se utiliza Room como la capa de abstracción (ORM) sobre la base de datos **SQLite** local. Gestiona la persistencia de productos, usuarios y pedidos.
-    * **Repository Pattern:** Expone los datos (desde Room) al resto de la app.
-* **`core` (Capa Núcleo):** Contiene utilidades transversales como `Validators.kt`, constantes de navegación y el tema de la app.
-
-### Stack Tecnológico Principal
-* **Kotlin:** Lenguaje principal.
-* **Jetpack Compose:** UI Toolkit.
-* **MVVM:** Patrón de arquitectura.
-* **Room (SQLite):** Persistencia local (Base de Datos) mediante el ORM Room sobre una base de datos SQLite.
-* **Jetpack Navigation:** Flujo de pantallas.
-* **Coroutines & Flow:** Para operaciones asíncronas y reactivas.
-* **Coil:** Para la carga de imágenes (desde URI de Cámara/Galería).
+> **Recuerda:** aquí reemplaza con los nombres reales de tu equipo.
 
 ---
 
-## 🚀 Instalación y Ejecución
+## 3. Funcionalidades principales
 
-1.  Clona el repositorio:
-    ```bash
-    git clone [https://github.com/tu-usuario/food-hub.git](https://github.com/tu-usuario/food-hub.git)
-    ```
-2.  Abre el proyecto con [Android Studio](https://developer.android.com/studio) (versión Flamingo o superior recomendada).
-3.  Espera a que Gradle sincronice todas las dependencias.
-    (Usar Gradle JDK bjr-17 porque es el usamos para el proyecto)
-4.  Ejecuta la aplicación en un emulador o dispositivo físico.
-    * (Nota: Para probar las funciones de **Cámara**, se requiere un dispositivo físico o un emulador configurado con una cámara virtual).
+La solución completa (app + microservicio) implementa las siguientes funcionalidades:
+
+### App móvil (Android – Kotlin + Jetpack Compose)
+
+- **Autenticación de usuarios**
+  - Registro de usuario nuevo (`RegisterScreen.kt`)
+  - Login de usuarios existentes (`LoginScreen.kt`) :contentReference[oaicite:2]{index=2}  
+- **Módulo cliente**
+  - Visualización de catálogo de productos (`HomeScreen.kt`)
+  - Vista de detalle de un producto (`DetailScreen.kt`)
+  - Agregar productos al carrito (`CartScreen.kt`)
+  - Ver resumen del pedido antes de confirmar (`OrderSummaryScreen.kt`)
+  - Historial de pedidos realizados (`OrderHistoryScreen.kt`) :contentReference[oaicite:3]{index=3}  
+- **Módulo administrador**
+  - Listado de productos administrables (`AdminListsScreen.kt`)
+  - Creación / edición de productos (`AdminProductFormScreen.kt`) :contentReference[oaicite:4]{index=4}  
+- **Arquitectura**
+  - Arquitectura **MVVM** con ViewModels dedicados: `AuthVM`, `HomeVM`, `DetailVM`, `CartVM`, `OrderHistoryVM`, `AdminVM`, `SessionVM`. :contentReference[oaicite:5]{index=5}  
+  - Capa de datos con **Room** (`AppDatabase`, DAOs y Entities) y consumo de API vía **Retrofit** (`FoodApi.kt`, `RetrofitClient`). :contentReference[oaicite:6]{index=6}  
+
+### Backend (Microservicio – Spring Boot 3 + Kotlin)
+
+- **Gestión de usuarios (Auth)**
+  - Registro y login básico de usuarios.
+  - CRUD completo de usuarios con roles (`CLIENT` / `ADMIN`). :contentReference[oaicite:7]{index=7}  
+- **Gestión de productos**
+  - CRUD completo de productos: crear, listar, actualizar y eliminar.
+  - Modelo `Product` con campos: `name`, `description`, `price`, `imageUrl`, `category`, `stock`, `available`. :contentReference[oaicite:8]{index=8}  
+- **Carrito de compras**
+  - Agregar productos al carrito.
+  - Listar carrito por usuario.
+  - Actualizar cantidad de un ítem.
+  - Eliminar ítems y limpiar carrito al generar una orden. :contentReference[oaicite:9]{index=9}  
+- **Órdenes de compra**
+  - Generación de una orden a partir del carrito del usuario.
+  - Validación de stock, descuento de inventario y cálculo del total.
+  - Consulta de órdenes por usuario. :contentReference[oaicite:10]{index=10}  
 
 ---
 
-## 👥 Autores
+## 4. Endpoints utilizados (microservicio y API externa)
 
-* **Raúl Bustamante**
-* **Martín Mora**
+### 4.1. Endpoints del microservicio backend (Spring Boot)
 
-*(Proyecto desarrollado para la asignatura Desarrollo de Aplicaciones Móviles DSY1105)*
+#### Auth – `/api/auth` :contentReference[oaicite:11]{index=11}  
+
+- `POST /api/auth/register`  
+  Registra un nuevo usuario.
+
+- `POST /api/auth/login`  
+  Inicia sesión con `email` y `password`.
+
+- `GET /api/auth`  
+  Obtiene todos los usuarios.
+
+- `GET /api/auth/{id}`  
+  Obtiene un usuario por su `id`.
+
+- `PUT /api/auth/{id}`  
+  Actualiza los datos de un usuario.
+
+- `DELETE /api/auth/{id}`  
+  Elimina un usuario.
+
+---
+
+#### Productos – `/api/products` :contentReference[oaicite:12]{index=12}  
+
+- `GET /api/products`  
+  Lista todos los productos.
+
+- `GET /api/products/{id}`  
+  Obtiene un producto específico por `id`.
+
+- `POST /api/products`  
+  Crea un nuevo producto.
+
+- `PUT /api/products/{id}`  
+  Actualiza un producto existente.
+
+- `DELETE /api/products/{id}`  
+  Elimina un producto por `id`.
+
+---
+
+#### Carrito – `/api/cart` :contentReference[oaicite:13]{index=13}  
+
+- `GET /api/cart/{userId}`  
+  Obtiene el carrito del usuario con `userId`.
+
+- `POST /api/cart/add`  
+  Agrega un producto al carrito.  
+  **Body (JSON)**:
+  ```json
+  {
+    "userId": 1,
+    "productId": 10,
+    "quantity": 2
+  }
