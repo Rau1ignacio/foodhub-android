@@ -286,7 +286,7 @@ sealed class Route(val route: String) {
 
 | Nombre | GitHub | Rol |
 |--------|--------|-----|
-| [Tu Nombre] | [@tu-usuario](https://github.com/tu-usuario) | Desarrollador Android / Líder Técnico |
+| Martin Mora | [@MartinMDevv](https://github.com/MartinMDevv) | Desarrollador Android / Líder Técnico |
 | Raúl Ignacio | [@Rau1ignacio](https://github.com/Rau1ignacio) | Desarrollador Backend / DevOps |
 
 ---
