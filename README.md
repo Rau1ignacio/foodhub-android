@@ -367,15 +367,6 @@ Las contribuciones son bienvenidas. Para cambios importantes:
 
 ---
 
-## 📧 Contacto
-
-Para preguntas o sugerencias sobre el proyecto:
-
-- GitHub Issues: [Crear issue](https://github.com/tu-usuario/foodhub-android/issues)
-- Email: tu-email@ejemplo.com
-
----
-
 ## 🙏 Agradecimientos
 
 - Material Design Guidelines por el sistema de diseño
